@@ -123,9 +123,55 @@
       }
     }
   },
-  "heroNote": {
-    "message": "Sekme değerleri sayfaların ölçülen JS belleğidir; Chrome'un gerçek kullanımı genelde daha fazladır.",
-    "description": "Note under tiles"
+  "noteExact": {
+    "message": "Kesin değerler, doğrudan Chrome'dan.",
+    "description": "Note under the tiles when every value is Chrome's exact figure"
+  },
+  "noteChrome": {
+    "message": "Değerler Chrome'dan. ≈ olanlar yaklaşıktır; örneğin belleği paylaşan sekmelerde.",
+    "description": "Note under the tiles when values come from Chrome but some are approximate"
+  },
+  "noteCalibrated": {
+    "message": "Ölçülen RAM kazancına göre tahmin (×$FACTOR$). Chrome, eklentilere kesin değeri vermiyor.",
+    "description": "Note under the tiles when values are scaled by the learned factor",
+    "placeholders": {
+      "factor": {
+        "content": "$1",
+        "example": "3.2"
+      }
+    }
+  },
+  "noteLearning": {
+    "message": "Tahmini değerler. Chrome, eklentilere kesin değeri vermiyor; birkaç sekme uyutulduktan sonra daha doğru olur.",
+    "description": "Note under the tiles while the calibration is still learning"
+  },
+  "noteHeap": {
+    "message": "Tahmini değerler. Chrome, eklentilere kesin değeri vermiyor; gerçek kullanım genelde daha fazladır.",
+    "description": "Note under the tiles when only the pages' JS memory is known"
+  },
+  "approxTitle": {
+    "message": "≈ işareti yaklaşık değer anlamına gelir",
+    "description": "Tooltip on values/notes that use the ≈ sign"
+  },
+  "memExact": {
+    "message": "Chrome'dan alınan gerçek değer",
+    "description": "Tooltip on a tab's memory value"
+  },
+  "memShared": {
+    "message": "Chrome'dan, ama bu sekme belleği başka sekmelerle paylaşıyor; payı yaklaşıktır",
+    "description": "Tooltip on a tab's memory value"
+  },
+  "memCalibrated": {
+    "message": "Ölçülen RAM kazancına göre tahmin",
+    "description": "Tooltip on a tab's memory value"
+  },
+  "memHeap": {
+    "message": "Yalnızca sayfanın JS belleği; gerçek kullanım daha fazla",
+    "description": "Tooltip on a tab's memory value"
+  },
+  "memFallback": {
+    "message": "Kaba tahmin; bu sekme ölçülemedi",
+    "description": "Tooltip on a sleeping tab's freed value"
   },
   "freedToast": {
     "message": "+$SIZE$ bellek boşaltıldı",
@@ -529,5 +575,89 @@
   },
   "back": {
     "message": "Geri"
+  },
+  "calibrate_status": {
+    "message": "Tahminler $COUNT$ ölçümle kalibre edildi (×$FACTOR$)",
+    "description": "Ayarlar > İstatistikler: sekme başına bellek tahminleri kalibre edildi; count = kullanılan gerçek RAM ölçümü, factor = gerçek RAM / JS belleği",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      },
+      "factor": {
+        "content": "$2",
+        "example": "3,2"
+      }
+    }
+  },
+  "calibrate_pending": {
+    "message": "Kalibre ediliyor: şu ana kadar $COUNT$/$NEEDED$ ölçüm",
+    "description": "Ayarlar > İstatistikler: sekme tahminlerini kalibre etmek için henüz yeterli gerçek RAM ölçümü yok",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      },
+      "needed": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "calibrate_title": {
+    "message": "Sekme başına değerler önce JS belleğidir ve sekmenin gerçek RAM kullanımından düşüktür. Sekmeler her uyutulduğunda boşalan gerçek RAM, JS bellekleriyle karşılaştırılır ve tipik oran her sekmenin gerçek kullanımını tahmin etmek için kullanılır. Toplamı sıfırlamak bu kalibrasyonu silmez.",
+    "description": "Kalibrasyon durum satırının ipucu"
+  },
+  "calibrate_reset": {
+    "message": "Kalibrasyonu sıfırla",
+    "description": "Ayarlar > İstatistikler'de öğrenilen kalibrasyonu silen küçük düğme"
+  },
+  "calibrate_resetToast": {
+    "message": "Kalibrasyon sıfırlandı",
+    "description": "Kalibrasyon sıfırlandıktan sonraki bildirim"
+  },
+  "processes_label": {
+    "message": "Gerçek bellek (Chrome Dev)",
+    "description": "Ayarlar > Genel satır etiketi, ardından ': Açık' veya ': Kapalı'. Yalnızca chrome.processes API'si olan Chrome Dev/Canary'de görünür"
+  },
+  "processes_hint": {
+    "message": "Her sekmenin gerçek belleğini tahmin etmek yerine Chrome'un görev yöneticisinden okur. Aynı işlemi paylaşan sekmelere bölüştürülür ve ≈ ile gösterilir",
+    "description": "Gerçek bellek satırının altındaki ipucu"
+  },
+  "processes_on": {
+    "message": "Açık",
+    "description": "Gerçek bellek özelliğinin durumu"
+  },
+  "processes_off": {
+    "message": "Kapalı",
+    "description": "Gerçek bellek özelliğinin durumu"
+  },
+  "processes_enable": {
+    "message": "Etkinleştir",
+    "description": "Chrome'dan 'processes' iznini isteyen düğme"
+  },
+  "processes_enableTitle": {
+    "message": "Chrome, işlem listesine erişim için izin isteyebilir",
+    "description": "Etkinleştir düğmesinin ipucu"
+  },
+  "processes_disable": {
+    "message": "Kapat",
+    "description": "'processes' iznini geri veren düğme"
+  },
+  "processes_enabledToast": {
+    "message": "Gerçek bellek açıldı",
+    "description": "İzin verildikten sonraki bildirim"
+  },
+  "processes_deniedToast": {
+    "message": "İzin verilmedi – tahminler kullanılıyor",
+    "description": "Kullanıcı izni reddettiğinde gösterilen bildirim"
+  },
+  "processes_disabledToast": {
+    "message": "Gerçek bellek kapatıldı – tahminler kullanılıyor",
+    "description": "İzin kaldırıldıktan sonraki bildirim"
+  },
+  "processes_failedToast": {
+    "message": "İzin değiştirilemedi",
+    "description": "İzin isteme/kaldırma başarısız olduğunda gösterilen bildirim"
   }
 }

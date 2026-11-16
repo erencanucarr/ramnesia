@@ -61,6 +61,32 @@ function fmtBytes(b) {
   return Math.round(mb) + " MB";
 }
 
+// --- bellek değerinin kaynağı -----------------------------------------------
+// kind: "exact" (chrome.processes) | "shared" | "calibrated" | "heap" | "fallback".
+// Yalnızca "exact" kesindir; diğerlerinin önüne "≈ " konur.
+const KIND_TITLE = {
+  exact: "memExact",
+  shared: "memShared",
+  calibrated: "memCalibrated",
+  heap: "memHeap",
+  fallback: "memFallback"
+};
+const isApprox = (kind) => kind !== "exact";
+const approxPrefix = (kind) => (isApprox(kind) ? "≈ " : "");
+const kindTitle = (kind) => i18n(KIND_TITLE[kind] || "memHeap");
+// uyanık sekme: kaynağı belli değilse ham JS belleği say
+const awakeKind = (t) => t.memoryKind || "heap";
+// uyuyan sekme: eski kayıtlarda / Chrome'un kendi uyuttuklarında kind yok → JS belleği ya da tahmin
+const savedKind = (s) => s.kind || (s.estimated ? "fallback" : "heap");
+
+// Kutu değeri: yaklaşıksa önüne soluk bir "≈" koyar ve üstüne gelince anlamını gösterir
+function setTileValue(el, text, approx) {
+  const parts = [text];
+  if (approx) parts.unshift(Object.assign(document.createElement("span"), { className: "approx", textContent: "≈ " }));
+  el.replaceChildren(...parts);
+  el.title = approx ? i18n("approxTitle") : "";
+}
+
 let toastTimer;
 function toast(text) {
   const t = $("toast");
@@ -156,19 +182,32 @@ async function save(quiet) {
 // --- özet kartı ------------------------------------------------------------
 
 let lastSavedNow = null;
+let lastStats = null;
+
+// "Boşaltılan" kutusu: uyuyan sekmelerden biri bile kesin değilse "≈"
+function renderFreed() {
+  if (!lastStats) return;
+  const approx =
+    !!lastStats.hasEstimate ||
+    tabs.some((t) => t.discarded && t.saved && isApprox(savedKind(t.saved)));
+  setTileValue($("savedNow"), fmtBytes(lastStats.savedNow), approx);
+}
 
 async function renderStats() {
   const r = await send({ type: "stats" });
   if (!r || r.error) return;
   const el = $("savedNow");
-  el.textContent = (r.hasEstimate ? "≈ " : "") + fmtBytes(r.savedNow);
+  lastStats = r;
+  renderFreed();
   $("sleepCount").textContent = i18n("sleepingOfTotal", r.discarded, r.total);
-  $("totalSaved").textContent = i18n("totalGain", fmtBytes(r.totals.bytes));
+  $("totalSaved").textContent = i18n("totalGain", "≈ " + fmtBytes(r.totals.bytes)); // toplam her zaman tahminlerden oluşur
   $("totalSaved").title = i18n("totalGainTitle", r.totals.count);
   system = r.system;
+  calibration = r.calibration || null;
   pressure = { active: !!r.pressureActive, minutes: r.effectiveMinutes ?? null };
   renderMode();
   renderSystem();
+  renderNote();
 
   if (lastSavedNow != null && r.savedNow > lastSavedNow) {
     toast(i18n("freedToast", fmtBytes(r.savedNow - lastSavedNow)));
@@ -184,6 +223,7 @@ async function renderStats() {
 
 let system = null;
 let awakeBytes = 0;
+let calibration = null; // stats.calibration: { factor, samples, ready } (özellik yoksa yok)
 
 function renderSystem() {
   if (!system) {
@@ -206,10 +246,36 @@ function renderAwake() {
   const awake = tabs.filter((t) => !t.discarded);
   const measured = awake.filter((t) => t.memory);
   awakeBytes = measured.reduce((a, t) => a + t.memory, 0);
-  $("awakeMem").textContent = measured.length ? fmtBytes(awakeBytes) : "–";
+  // ölçülemeyen uyanık sekme varsa toplam da eksik/yaklaşıktır
+  const approx = measured.length < awake.length || measured.some((t) => isApprox(awakeKind(t)));
+  if (measured.length) setTileValue($("awakeMem"), fmtBytes(awakeBytes), approx);
+  else setTileValue($("awakeMem"), "–", false);
   $("awakeCount").textContent = i18n("awakeCount", awake.length);
-  $("heroNote").textContent = i18n("heroNote");
   renderSystem();
+  renderFreed();
+  renderNote();
+}
+
+// Kutuların altındaki not: değerlerin nereden geldiğini duruma göre anlatır.
+function renderNote() {
+  const kinds = new Set();
+  for (const t of tabs) {
+    if (t.discarded) { if (t.saved) kinds.add(savedKind(t.saved)); }
+    else if (t.memory) kinds.add(awakeKind(t));
+  }
+  const allExact = kinds.size === 1 && kinds.has("exact");
+  const factor = calibration?.factor;
+  let text = "";
+  if (!kinds.size) text = ""; // gösterilen değer yok → not da yok
+  else if (allExact) text = i18n("noteExact");
+  else if (kinds.has("exact") || kinds.has("shared")) text = i18n("noteChrome");
+  else if (calibration?.ready && kinds.has("calibrated") && Number.isFinite(factor))
+    text = i18n("noteCalibrated", factor.toFixed(1).replace(".", DECIMAL_SEP));
+  else if (calibration && !calibration.ready) text = i18n("noteLearning");
+  else text = i18n("noteHeap");
+  $("heroNoteText").textContent = text;
+  $("heroNote").hidden = !text;
+  $("heroNote").title = text && !allExact ? i18n("approxTitle") : "";
 }
 
 // --- sekme listesi ---------------------------------------------------------
@@ -219,10 +285,13 @@ let tabs = [];
 function statusParts(t) {
   if (t.discarded) {
     return t.saved
-      ? [["good", i18n("statusSleeping")], ["", i18n("freedAmount", (t.saved.estimated ? "≈ " : "") + fmtBytes(t.saved.bytes))]]
+      ? [
+          ["good", i18n("statusSleeping")],
+          ["", i18n("freedAmount", approxPrefix(savedKind(t.saved)) + fmtBytes(t.saved.bytes)), kindTitle(savedKind(t.saved))]
+        ]
       : [["good", i18n("statusSleeping")]];
   }
-  const mem = t.memory ? [["", fmtBytes(t.memory)]] : [];
+  const mem = t.memory ? [["", approxPrefix(awakeKind(t)) + fmtBytes(t.memory), kindTitle(awakeKind(t))]] : [];
   const map = {
     locked: ["lock", i18n("reasonLocked")],
     active: ["", i18n("reasonActive")],
@@ -271,9 +340,11 @@ function renderTabs() {
     const title = Object.assign(document.createElement("div"), { className: "title", textContent: t.title });
     const status = document.createElement("div");
     status.className = "status";
-    statusParts(t).forEach(([cls, text], i) => {
+    // parça: [sınıf, metin, ipucu?] — ipucu bellek değerinin kaynağını anlatır
+    statusParts(t).forEach(([cls, text, tip], i) => {
       const span = document.createElement("span");
       if (i === 0 && cls !== undefined) span.className = "pill " + cls;
+      if (tip) { span.title = tip; span.classList.add("mem"); }
       span.textContent = text;
       status.append(span);
     });

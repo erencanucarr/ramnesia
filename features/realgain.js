@@ -7,7 +7,11 @@
 //
 // Storage:
 //   chrome.storage.local   realTotals = { bytes, batches, since }  (reliable measurements only)
-//   chrome.storage.session realLast   = { at, bytes, count, estimateBytes, source }
+//   chrome.storage.session realLast   = { at, bytes, count, heapBytes, estimateBytes, source }
+//
+// heapBytes / estimateBytes are the *raw* JS-heap sum of the discarded tabs (never the
+// displayed, possibly calibrated value): features/calibrate.js learns real/heap from
+// these, so using calibrated numbers here would make the calibration compound.
 (() => {
   const SAMPLE_AT_MS = [1500, 3000, 5000];        // after the batch; total wait < 8 s
   const MERGE_WINDOW_MS = 12000;                  // a batch starting this soon joins the running measurement
@@ -56,7 +60,8 @@
     if (active === m) active = null;
 
     const delta = Math.max(0, m.maxDelta); // OS reuse / other apps can make it negative
-    const ceiling = PLAUSIBLE_FACTOR * m.estimateBytes + PLAUSIBLE_EXTRA;
+    // Ölçülemeyen sekmeler tavana 50 MB tahminle eklenir (bkz. FALLBACK_BYTES).
+    const ceiling = PLAUSIBLE_FACTOR * (m.estimateBytes + m.unmeasured * FALLBACK_BYTES) + PLAUSIBLE_EXTRA;
     if (m.overlap || delta <= 0 || delta > ceiling) {
       console.debug("Ramnesia realgain: unreliable measurement skipped", {
         delta, estimate: m.estimateBytes, count: m.count, overlap: m.overlap
@@ -67,7 +72,9 @@
       at: Date.now(),
       bytes: delta,
       count: m.count,
-      estimateBytes: m.estimateBytes,
+      heapBytes: m.estimateBytes,
+      estimateBytes: m.estimateBytes, // kept for compatibility; same raw heap sum
+      unmeasured: m.unmeasured, // tabs whose heap could not be read; calibration skips these
       source: m.sources.size === 1 ? [...m.sources][0] : "mixed"
     };
     queueWrite(async () => {
@@ -122,7 +129,7 @@
     entry.before = avail;
   });
 
-  RN.afterBatch.push(async ({ tabIds, count, bytes, source }) => {
+  RN.afterBatch.push(async ({ tabIds, count, heapBytes, unmeasured, source }) => {
     // Matching before-entry: the latest one with this source containing these tabs.
     let i = -1;
     for (let k = pending.length - 1; k >= 0; k--) {
@@ -142,7 +149,8 @@
       if (entry.overlap) m.overlap = true;
       if (count) {
         m.count += count;
-        m.estimateBytes += bytes || 0;
+        m.estimateBytes += heapBytes || 0;
+        m.unmeasured += unmeasured || 0;
         m.sources.add(source);
       }
       if (m.holds === 0) schedule(m);
@@ -155,7 +163,8 @@
       before: entry.before,
       overlap: entry.overlap,
       count,
-      estimateBytes: bytes || 0,
+      estimateBytes: heapBytes || 0, // raw JS heap, see header
+      unmeasured: unmeasured || 0,
       sources: new Set([source]),
       startedAt: Date.now(),
       maxDelta: -Infinity,

@@ -22,8 +22,28 @@ const RN = {
   afterBatch: [],   // async ({ tabIds, count, bytes, source }) => void → uyutmadan hemen sonra
   statsExtras: [],  // async () => object   → popup "stats" cevabına eklenir
   tabExtras: [],    // async (tab) => object → popup "tabsInfo" her sekme kaydına eklenir
-  messages: {}      // { type: async (msg, sender) => result } → yeni mesaj türleri
+  messages: {},     // { type: async (msg, sender) => result } → yeni mesaj türleri
+  // Sekme belleği kaynakları: { priority, fn: async (tab, heapBytes) => { bytes, kind } | null }
+  // Küçük priority önce denenir; ilk dolu sonuç kullanılır. kind: "exact" | "calibrated".
+  // Hiçbiri sonuç vermezse ham JS belleği kullanılır (kind: "heap").
+  memoryProviders: []
 };
+
+// Bir sekmenin bellek değeri: { bytes, kind, heap } | null
+// heap: ham JS belleği (performance.memory) — kalibrasyon için hep ayrıca taşınır.
+async function tabMemory(tab) {
+  const heap = await measureTab(tab.id);
+  const providers = [...RN.memoryProviders].sort((a, b) => a.priority - b.priority);
+  for (const p of providers) {
+    try {
+      const r = await p.fn(tab, heap);
+      if (r && r.bytes > 0) return { bytes: r.bytes, kind: r.kind || "calibrated", heap };
+    } catch (e) {
+      console.warn("Ramnesia memory provider error", e);
+    }
+  }
+  return heap ? { bytes: heap, kind: "heap", heap } : null;
+}
 
 async function runHooks(list, ...args) {
   for (const h of list) {
@@ -127,8 +147,15 @@ function fmtBytes(b) {
 // Sekmenin JS belleğini (performance.memory) okur. Bu, sekmenin toplam RAM'inin
 // bir alt sınırıdır; gerçek kazanç genelde daha yüksektir.
 
+// Önbellek bellekte tek bir nesnede tutulur; paralel ölçümler aynı nesneyi güncellediği
+// için birbirinin kaydını silmez. Oturum deposuna da yazılır (worker yeniden başlarsa diye).
+// Yükleme sözü (promise) saklanır: soğuk başlangıçta aynı anda gelen çağrılar da
+// aynı nesneyi alır.
+let memCacheP = null;
+const getMemCache = () => (memCacheP ??= sget("memCache", {}));
+
 async function measureTab(tabId) {
-  const cache = await sget("memCache", {});
+  const cache = await getMemCache();
   const c = cache[tabId];
   if (c && Date.now() - c.t < MEM_CACHE_MS) return c.bytes;
   try {
@@ -137,6 +164,7 @@ async function measureTab(tabId) {
       injectImmediately: true,
       func: () => (performance.memory ? performance.memory.usedJSHeapSize : null)
     });
+    run.catch(() => null); // zaman aşımından sonra gelen hata "Uncaught (in promise)" olmasın
     const timeout = new Promise((r) => setTimeout(() => r(null), 800));
     const res = await Promise.race([run, timeout]);
     const bytes = res?.[0]?.result ?? null;
@@ -172,44 +200,61 @@ async function effectiveLimit(s) {
 
 // --- uyutma ----------------------------------------------------------------
 
+// Şu an bu eklentinin uyutmakta olduğu sekmeler: onUpdated'deki "Chrome uyuttu" yolu
+// bunlara dokunmamalı, yoksa buradaki kaydın üstüne yazabilir.
+const discardingIds = new Set();
+
+// Döner: { bytes, heap } | null. bytes = gösterilen kazanç, heap = ham JS belleği (ölçülemediyse null).
 async function discardTab(tab) {
-  const measured = await measureTab(tab.id);
-  const bytes = measured ?? FALLBACK_BYTES;
+  const m = await tabMemory(tab);
+  const bytes = m?.bytes ?? FALLBACK_BYTES;
+  const heap = m?.heap ?? null; // null = ölçülemedi (50 MB tahmini sadece gösterim için)
   let res;
+  discardingIds.add(tab.id);
   try {
-    res = await chrome.tabs.discard(tab.id);
-  } catch {
-    return null;
+    try {
+      res = await chrome.tabs.discard(tab.id);
+    } catch {
+      return null;
+    }
+    if (!res) return null;
+    discardingIds.add(res.id);
+    const saved = await sget("saved", {});
+    saved[res.id] = { bytes, heap, kind: m?.kind || "fallback", estimated: m == null || m.kind !== "exact" };
+    const totals = await getTotals();
+    totals.bytes += bytes;
+    totals.count += 1;
+    await sset({ saved });
+    await chrome.storage.local.set({ totals });
+    return { bytes, heap };
+  } finally {
+    discardingIds.delete(tab.id);
+    if (res) discardingIds.delete(res.id);
   }
-  if (!res) return null;
-  const saved = await sget("saved", {});
-  saved[res.id] = { bytes, estimated: measured == null };
-  const totals = await getTotals();
-  totals.bytes += bytes;
-  totals.count += 1;
-  await sset({ saved });
-  await chrome.storage.local.set({ totals });
-  return bytes;
 }
 
 // Bir grup sekmeyi uyutur; özelliklerin before/after kancalarını çalıştırır.
 // source: "auto" | "manual" | "all" | özelliklerin kendi adları (ör. "idle", "group")
 async function discardBatch(tabs, source) {
-  if (!tabs.length) return { count: 0, bytes: 0, tabIds: [] };
+  if (!tabs.length) return { count: 0, bytes: 0, heapBytes: 0, unmeasured: 0, tabIds: [] };
   await runHooks(RN.beforeBatch, { tabIds: tabs.map((t) => t.id), source });
   let count = 0;
-  let bytes = 0;
+  let bytes = 0;     // gösterilen kazanç (exact/calibrated/heap karışık olabilir)
+  let heapBytes = 0; // ölçülen sekmelerin ham JS belleği toplamı — kalibrasyon bununla yapılmalı
+  let unmeasured = 0; // JS belleği ölçülemeyen (50 MB tahmin edilen) sekme sayısı
   const tabIds = [];
   for (const tab of tabs) {
-    const b = await discardTab(tab);
-    if (b != null) {
+    const r = await discardTab(tab);
+    if (r != null) {
       count++;
-      bytes += b;
+      bytes += r.bytes;
+      if (r.heap == null) unmeasured++;
+      else heapBytes += r.heap;
       tabIds.push(tab.id);
     }
   }
-  await runHooks(RN.afterBatch, { tabIds, count, bytes, source });
-  return { count, bytes, tabIds };
+  await runHooks(RN.afterBatch, { tabIds, count, bytes, heapBytes, unmeasured, source });
+  return { count, bytes, heapBytes, unmeasured, tabIds };
 }
 
 // force: süreyi beklemeden uyut. filter: ek sekme süzgeci (tab => bool). source: kancalar için etiket.
@@ -237,9 +282,11 @@ async function sweep({ force = false, filter = null, source = force ? "all" : "a
 
   const { count, bytes } = await discardBatch(candidates, source);
 
-  // Kapanmış sekmeleri temizle, uyanmış sekmelerin kazancını düş
-  const alive = new Set(tabs.map((t) => String(t.id)));
-  const sleeping = new Set(tabs.filter((t) => t.discarded).map((t) => String(t.id)));
+  // Kapanmış sekmeleri temizle, uyanmış sekmelerin kazancını düş.
+  // Sekmeler uyutmadan SONRA yeniden sorgulanır; yoksa az önce uyutulanların kaydı silinir.
+  const after = await chrome.tabs.query({});
+  const alive = new Set(after.map((t) => String(t.id)));
+  const sleeping = new Set(after.filter((t) => t.discarded).map((t) => String(t.id)));
   for (const id of Object.keys(seen)) if (!alive.has(id)) delete seen[id];
   const saved = await sget("saved", {});
   for (const id of Object.keys(saved)) if (!sleeping.has(id)) delete saved[id];
@@ -311,13 +358,14 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
       await sset({ saved });
       updateBadge();
     }
-  } else if (info.discarded === true) {
+  } else if (info.discarded === true && !discardingIds.has(tabId)) {
     // Chrome'un kendisi uyuttuysa ve önceden ölçmüşsek onu da göster
+    // (bu eklentinin uyuttuğu sekmeler discardingIds'tedir; onları discardTab kaydeder)
     const saved = await sget("saved", {});
     if (!saved[tabId]) {
-      const cache = await sget("memCache", {});
+      const cache = await getMemCache();
       if (cache[tabId]) {
-        saved[tabId] = { bytes: cache[tabId].bytes, estimated: false, byChrome: true };
+        saved[tabId] = { bytes: cache[tabId].bytes, heap: cache[tabId].bytes, kind: "heap", estimated: true, byChrome: true };
         await sset({ saved });
         updateBadge();
       }
@@ -344,7 +392,7 @@ chrome.tabs.onReplaced.addListener(async (added, removed) => {
 chrome.tabs.onRemoved.addListener(async (tabId) => {
   const seen = await sget("seen", {});
   const saved = await sget("saved", {});
-  const memCache = await sget("memCache", {});
+  const memCache = await getMemCache();
   delete seen[tabId];
   delete saved[tabId];
   delete memCache[tabId];
@@ -365,7 +413,7 @@ async function tabsInfo() {
   return Promise.all(
     tabs.map(async (t) => {
       const last = Math.max(seen[t.id] || 0, t.lastAccessed || 0) || now;
-      const mem = t.discarded ? null : await measureTab(t.id);
+      const m = t.discarded ? null : await tabMemory(t);
       const extras = {};
       for (const h of RN.tabExtras) {
         try { Object.assign(extras, await h(t)); } catch (e) { console.warn(e); }
@@ -381,7 +429,9 @@ async function tabsInfo() {
         discarded: !!t.discarded,
         locked: t.autoDiscardable === false,
         reason: skipReason(t, s) || (t.discarded ? null : await extraSkipReason(t, s)),
-        memory: mem,
+        memory: m?.bytes ?? null,        // gösterilecek değer
+        memoryKind: m?.kind ?? null,     // "exact" | "calibrated" | "heap" | null
+        heap: m?.heap ?? null,           // ham JS belleği
         saved: saved[t.id] || null,
         remainingMs: Math.max(0, limit - (now - last))
       };
@@ -464,5 +514,7 @@ importScripts(
   "features/guard.js",
   "features/idle.js",
   "features/groups.js",
-  "features/realgain.js"
+  "features/realgain.js",
+  "features/calibrate.js",
+  "features/processes.js"
 );

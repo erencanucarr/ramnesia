@@ -53,12 +53,12 @@ Chrome's built-in Memory Saver decides on its own when to put tabs to sleep. Ram
 
 ## How memory is measured
 
-Chrome does not give extensions a tab's total memory use, so the numbers are approximate:
+Chrome (Stable and Beta) does not give extensions a tab's real memory use, so Ramnesia works with what it can measure. Values marked `≈` are approximate.
 
-- Per-tab numbers are the page's JavaScript heap (`performance.memory`). The real memory use of a tab is higher, so the savings shown are usually lower than the real savings.
-- Tabs that can't be measured are counted as 50 MB and marked with `≈`.
-- System RAM is read with `chrome.system.memory`.
-- The measured real gain is the change in free system RAM a few seconds after tabs are put to sleep. Other programs and the operating system's cache affect it, so it is approximate; readings that look implausible are discarded.
+- **Measured real gain.** Ramnesia reads free system RAM (`chrome.system.memory`) just before and a few seconds after tabs are put to sleep. The difference is the real RAM freed. Other programs and the operating system's cache affect it, so implausible readings are discarded.
+- **Per-tab estimates.** Each tab's JavaScript memory (`performance.memory`) is measured. After at least 3 reliable real-gain measurements, Ramnesia learns how much real RAM your tabs use per byte of JavaScript memory (for example ×3.2) and shows tabs as JavaScript memory × that factor. Until then the raw JavaScript memory is shown, which is lower than the real use. The factor can be reset under Settings → Statistics.
+- **Exact values on Chrome Dev/Canary.** There, the `chrome.processes` API gives each tab's real process memory. It can be turned on under Settings → General. Tabs that share a process with other tabs are split and marked `≈`. On Stable and Beta this option does not appear, and chrome://extensions shows a harmless warning that the `processes` permission needs the Dev channel.
+- Tabs that can't be measured are counted as 50 MB and marked `≈`. They are never used for learning the factor.
 
 ## Permissions
 
@@ -72,6 +72,7 @@ Chrome does not give extensions a tab's total memory use, so the numbers are app
 | `notifications` | The optional sleep notification |
 | `idle` | Noticing when the computer is locked or idle |
 | `tabGroups` | Sleeping and locking tab groups |
+| `processes` (optional) | Exact per-tab memory on Chrome Dev/Canary, only if you turn it on |
 
 No data leaves your device.
 
@@ -116,7 +117,7 @@ Chrome'un kendi Bellek Tasarrufu özelliği sekmeleri ne zaman uyutacağına ken
 
 ### Bellek ölçümü
 
-Chrome eklentilere bir sekmenin toplam bellek kullanımını vermez, bu yüzden rakamlar yaklaşıktır. Sekme rakamları sayfanın JavaScript belleğidir (`performance.memory`). Sekmenin gerçek kullanımı bundan fazladır, yani gösterilen kazanç genelde gerçek kazançtan düşüktür. Ölçülemeyen sekmeler 50 MB sayılır ve önüne `≈` konur. Sistem RAM'i `chrome.system.memory` ile okunur. Ölçülen gerçek kazanç, sekmeler uyutulduktan birkaç saniye sonra boş RAM'deki değişimdir; diğer programlar ve işletim sisteminin önbelleği etkilediği için yaklaşıktır, mantıksız görünen ölçümler sayılmaz. Yazı koruması için yazdığın metin sayfadan dışarı çıkmaz ve saklanmaz; sadece bir alanın değişip değişmediği bildirilir. Hiçbir veri cihazından dışarı gönderilmez.
+Chrome (Stable ve Beta) eklentilere bir sekmenin gerçek bellek kullanımını vermez, bu yüzden Ramnesia ölçebildikleriyle çalışır. `≈` işaretli değerler yaklaşıktır. Sekmeler uyutulmadan hemen önce ve birkaç saniye sonra sistemin boş RAM'i okunur (`chrome.system.memory`); aradaki fark gerçekte boşalan RAM'dir. Diğer programlar ve işletim sisteminin önbelleği etkilediği için mantıksız görünen ölçümler sayılmaz. Her sekmenin JavaScript belleği de ölçülür (`performance.memory`). En az 3 güvenilir ölçümden sonra Ramnesia, JavaScript belleğinin her baytına ne kadar gerçek RAM düştüğünü öğrenir (örneğin ×3,2) ve sekmeleri buna göre gösterir. O zamana kadar ham JavaScript belleği gösterilir; bu, gerçek kullanımdan düşüktür. Öğrenilen oran Ayarlar → İstatistikler'den sıfırlanabilir. Chrome Dev/Canary'de `chrome.processes` ile her sekmenin gerçek süreç belleği okunabilir; bu, Ayarlar → Genel'den açılır. Normal Chrome'da bu seçenek görünmez ve chrome://extensions sayfasında `processes` izninin Dev sürümü gerektirdiğine dair zararsız bir uyarı çıkar. Ölçülemeyen sekmeler 50 MB sayılır, `≈` ile işaretlenir ve oran öğrenilirken kullanılmaz. Yazı koruması için yazdığın metin sayfadan dışarı çıkmaz ve saklanmaz; sadece bir alanın değişip değişmediği bildirilir. Hiçbir veri cihazından dışarı gönderilmez.
 
 ### Lisans
 

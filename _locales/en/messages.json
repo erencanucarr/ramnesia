@@ -123,9 +123,55 @@
       }
     }
   },
-  "heroNote": {
-    "message": "Tab values are the measured JS memory of each page; Chrome's actual usage is usually higher.",
-    "description": "Note under tiles"
+  "noteExact": {
+    "message": "Exact values from Chrome.",
+    "description": "Note under the tiles when every value is Chrome's exact figure"
+  },
+  "noteChrome": {
+    "message": "Values from Chrome. Those marked ≈ are approximate, for example when tabs share memory.",
+    "description": "Note under the tiles when values come from Chrome but some are approximate"
+  },
+  "noteCalibrated": {
+    "message": "Estimated from your measured RAM gains (×$FACTOR$). Chrome doesn't give extensions the exact value.",
+    "description": "Note under the tiles when values are scaled by the learned factor",
+    "placeholders": {
+      "factor": {
+        "content": "$1",
+        "example": "3.2"
+      }
+    }
+  },
+  "noteLearning": {
+    "message": "Estimates. Chrome doesn't give extensions the exact value; they get more accurate after a few tabs are put to sleep.",
+    "description": "Note under the tiles while the calibration is still learning"
+  },
+  "noteHeap": {
+    "message": "Estimates. Chrome doesn't give extensions the exact value, so real use is usually higher.",
+    "description": "Note under the tiles when only the pages' JS memory is known"
+  },
+  "approxTitle": {
+    "message": "≈ means approximate",
+    "description": "Tooltip on values/notes that use the ≈ sign"
+  },
+  "memExact": {
+    "message": "Real value from Chrome",
+    "description": "Tooltip on a tab's memory value"
+  },
+  "memShared": {
+    "message": "From Chrome, but this tab shares memory with other tabs, so its share is approximate",
+    "description": "Tooltip on a tab's memory value"
+  },
+  "memCalibrated": {
+    "message": "Estimated from your measured RAM gains",
+    "description": "Tooltip on a tab's memory value"
+  },
+  "memHeap": {
+    "message": "Page's JS memory only — real use is higher",
+    "description": "Tooltip on a tab's memory value"
+  },
+  "memFallback": {
+    "message": "Rough guess — this tab couldn't be measured",
+    "description": "Tooltip on a sleeping tab's freed value"
   },
   "freedToast": {
     "message": "+$SIZE$ memory freed",
@@ -529,5 +575,89 @@
   },
   "back": {
     "message": "Back"
+  },
+  "calibrate_status": {
+    "message": "Estimates calibrated from $COUNT$ measurements (×$FACTOR$)",
+    "description": "Settings > Statistics: per-tab memory estimates are calibrated; count = real RAM measurements used, factor = real RAM / JS memory",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      },
+      "factor": {
+        "content": "$2",
+        "example": "3.2"
+      }
+    }
+  },
+  "calibrate_pending": {
+    "message": "Calibrating: $COUNT$ of $NEEDED$ measurements so far",
+    "description": "Settings > Statistics: not enough real RAM measurements yet to calibrate per-tab estimates",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1"
+      },
+      "needed": {
+        "content": "$2",
+        "example": "3"
+      }
+    }
+  },
+  "calibrate_title": {
+    "message": "Per-tab numbers start as JS memory, which is lower than a tab's real RAM. Each time tabs are put to sleep, the real RAM freed is compared with their JS memory, and the typical ratio is used to estimate every tab's real usage. Resetting the total keeps this calibration.",
+    "description": "Tooltip for the calibration status line"
+  },
+  "calibrate_reset": {
+    "message": "Reset calibration",
+    "description": "Small button in Settings > Statistics that forgets the learned calibration"
+  },
+  "calibrate_resetToast": {
+    "message": "Calibration reset",
+    "description": "Toast after the calibration was reset"
+  },
+  "processes_label": {
+    "message": "Exact memory (Chrome Dev)",
+    "description": "Settings > General row label, followed by ': On' or ': Off'. Only shown on Chrome Dev/Canary, where the chrome.processes API exists"
+  },
+  "processes_hint": {
+    "message": "Reads each tab's real memory from Chrome's task manager instead of estimating it. Tabs sharing one process are split and shown with ≈",
+    "description": "Hint under the exact memory row"
+  },
+  "processes_on": {
+    "message": "On",
+    "description": "State of the exact memory feature"
+  },
+  "processes_off": {
+    "message": "Off",
+    "description": "State of the exact memory feature"
+  },
+  "processes_enable": {
+    "message": "Enable",
+    "description": "Button that asks Chrome for the 'processes' permission"
+  },
+  "processes_enableTitle": {
+    "message": "Chrome may ask you to allow access to its process list",
+    "description": "Tooltip of the Enable button"
+  },
+  "processes_disable": {
+    "message": "Turn off",
+    "description": "Button that gives the 'processes' permission back"
+  },
+  "processes_enabledToast": {
+    "message": "Exact memory turned on",
+    "description": "Toast after the permission was granted"
+  },
+  "processes_deniedToast": {
+    "message": "Permission not granted – using estimates",
+    "description": "Toast when the user declined the permission"
+  },
+  "processes_disabledToast": {
+    "message": "Exact memory turned off – using estimates",
+    "description": "Toast after the permission was removed"
+  },
+  "processes_failedToast": {
+    "message": "Couldn't change the permission",
+    "description": "Toast when requesting/removing the permission failed"
   }
 }
