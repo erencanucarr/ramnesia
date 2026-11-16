@@ -7,7 +7,10 @@ const DEFAULTS = {
   skipPinned: true,    // sabitlenmiş sekmelere dokunma
   skipAudible: true,   // ses çalan sekmelere dokunma
   notify: false,       // uyutunca masaüstü bildirimi göster
-  whitelist: []        // hiç uyutulmayacak alan adları (ör. "youtube.com")
+  whitelist: [],       // hiç uyutulmayacak alan adları (ör. "youtube.com")
+  pressureMode: false, // RAM yüksekken boşta sekmeleri daha erken uyut
+  pressureThreshold: 85, // % kullanılan RAM (50–95)
+  pressureMinutes: 1   // RAM yüksekken uyutma süresi (1–60 dk)
 };
 
 const ALARM = "ramnesia-tick";
@@ -19,9 +22,22 @@ const MEM_CACHE_MS = 30 * 1000;
 // session: tarayıcı kapanınca silinir (sekme kimlikleri zaten değişir)
 // local:   kalıcı toplam istatistikler
 
+const clampInt = (v, min, max, def) => {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
+};
+
 async function getSettings() {
-  return { ...DEFAULTS, ...(await chrome.storage.sync.get(DEFAULTS)) };
+  const s = { ...DEFAULTS, ...(await chrome.storage.sync.get(DEFAULTS)) };
+  s.pressureThreshold = clampInt(s.pressureThreshold, 50, 95, DEFAULTS.pressureThreshold);
+  s.pressureMinutes = clampInt(s.pressureMinutes, 1, 60, DEFAULTS.pressureMinutes);
+  return s;
 }
+
+// --- yerelleştirme ---------------------------------------------------------
+
+const i18n = (key, ...subs) => chrome.i18n.getMessage(key, subs.map(String)) || key;
+const DECIMAL_SEP = /^tr\b/i.test(chrome.i18n.getUILanguage()) ? "," : ".";
 async function sget(key, def) {
   const r = await chrome.storage.session.get(key);
   return r[key] ?? def;
@@ -69,7 +85,7 @@ function canDiscard(tab, s) {
 
 function fmtBytes(b) {
   const mb = b / (1024 * 1024);
-  if (mb >= 1024) return (mb / 1024).toFixed(1).replace(".", ",") + " GB";
+  if (mb >= 1024) return (mb / 1024).toFixed(1).replace(".", DECIMAL_SEP) + " GB";
   return Math.round(mb) + " MB";
 }
 
@@ -98,6 +114,26 @@ async function measureTab(tabId) {
   } catch {
     return null;
   }
+}
+
+// --- RAM baskısı ----------------------------------------------------------
+// Sistem RAM kullanımı eşiği aşınca (ve mod açıksa) daha kısa süre uygulanır.
+
+async function memUsedPct() {
+  try {
+    const m = await chrome.system.memory.getInfo();
+    if (!m?.capacity) return null;
+    return ((m.capacity - m.availableCapacity) / m.capacity) * 100;
+  } catch {
+    return null;
+  }
+}
+
+async function effectiveLimit(s) {
+  const usedPct = s.pressureMode ? await memUsedPct() : null;
+  const pressureActive = !!s.pressureMode && usedPct != null && usedPct >= s.pressureThreshold;
+  const minutes = pressureActive ? Math.min(s.minutes, s.pressureMinutes) : s.minutes;
+  return { pressureActive, minutes, limitMs: minutes * 60 * 1000 };
 }
 
 // --- uyutma ----------------------------------------------------------------
@@ -129,7 +165,7 @@ async function sweep({ force = false } = {}) {
   const tabs = await chrome.tabs.query({});
   const seen = await sget("seen", {});
   const now = Date.now();
-  const limit = s.minutes * 60 * 1000;
+  const { limitMs: limit } = await effectiveLimit(s);
   let count = 0;
   let bytes = 0;
 
@@ -161,8 +197,8 @@ async function sweep({ force = false } = {}) {
     chrome.notifications.create({
       type: "basic",
       iconUrl: "icons/icon128.png",
-      title: "Ramnesia",
-      message: `${count} sekme uyutuldu · ~${fmtBytes(bytes)} bellek boşaltıldı`,
+      title: i18n("extName"),
+      message: i18n("notifyDiscarded", count, fmtBytes(bytes)),
       silent: true
     });
   }
@@ -272,7 +308,7 @@ async function tabsInfo() {
   const saved = await sget("saved", {});
   const tabs = (await chrome.tabs.query({})).filter((t) => isWeb(t.url));
   const now = Date.now();
-  const limit = s.minutes * 60 * 1000;
+  const { limitMs: limit } = await effectiveLimit(s);
 
   return Promise.all(
     tabs.map(async (t) => {
@@ -297,6 +333,8 @@ async function tabsInfo() {
 }
 
 async function stats() {
+  const s = await getSettings();
+  const eff = await effectiveLimit(s);
   const tabs = await chrome.tabs.query({});
   const saved = await sget("saved", {});
   const vals = Object.values(saved);
@@ -311,6 +349,8 @@ async function stats() {
     discarded: tabs.filter((t) => t.discarded).length,
     savedNow: vals.reduce((a, x) => a + x.bytes, 0),
     hasEstimate: vals.some((x) => x.estimated),
+    pressureActive: s.enabled && eff.pressureActive,
+    effectiveMinutes: eff.minutes,
     totals: await getTotals()
   };
 }

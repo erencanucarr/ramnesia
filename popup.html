@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Ramnesia</title>
+  <title data-i18n="extName">Ramnesia</title>
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
@@ -10,11 +10,11 @@
     <div class="brand">
       <img src="icons/icon48.png" alt="" />
       <div>
-        <h1>Ramnesia</h1>
-        <p id="modeText">Otomatik uyutma açık</p>
+        <h1 data-i18n="extName">Ramnesia</h1>
+        <p id="modeText"></p>
       </div>
     </div>
-    <label class="switch" title="Aç / Kapat">
+    <label class="switch" data-i18n-title="toggleTitle">
       <input type="checkbox" id="enabled" />
       <span></span>
     </label>
@@ -23,30 +23,34 @@
   <section class="hero">
     <div class="hero-top">
       <div>
-        <div class="hero-label">Sistem belleği</div>
+        <div class="hero-label" data-i18n="systemMemory"></div>
         <div class="hero-value"><span id="sysUsed">–</span><small id="sysCap"></small></div>
       </div>
       <div class="hero-pct" id="sysPct"></div>
     </div>
-    <div class="meter" title="Beyaz: diğer kullanım · yeşil: aktif sekmeler">
+    <div class="pressure-pill" id="pressurePill" hidden>
+      <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+      <span data-i18n="pressurePill"></span>
+    </div>
+    <div class="meter" data-i18n-title="meterTitle">
       <div id="meterOther"></div><div id="meterTabs"></div>
     </div>
     <div class="hero-meta">
       <span id="sysFree"></span>
-      <span id="totalSaved" title="Eklenti kurulduğundan beri">Toplam: 0 MB</span>
+      <span id="totalSaved"></span>
     </div>
   </section>
 
   <div class="tiles">
     <div class="tile">
-      <div class="tile-label"><i class="dot awake"></i>Aktif sekmeler</div>
+      <div class="tile-label"><i class="dot awake"></i><span data-i18n="awakeTabs"></span></div>
       <div class="tile-value" id="awakeMem">–</div>
-      <div class="tile-sub" id="awakeCount">0 sekme</div>
+      <div class="tile-sub" id="awakeCount"></div>
     </div>
     <div class="tile">
-      <div class="tile-label"><i class="dot asleep"></i>Boşaltılan</div>
+      <div class="tile-label"><i class="dot asleep"></i><span data-i18n="freedLabel"></span></div>
       <div class="tile-value good" id="savedNow">0 MB</div>
-      <div class="tile-sub" id="sleepCount">0 sekme uyuyor</div>
+      <div class="tile-sub" id="sleepCount"></div>
     </div>
   </div>
   <p class="note" id="heroNote"></p>
@@ -54,11 +58,11 @@
   <div class="toolbar">
     <div class="search">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="search" type="search" placeholder="Sekme ara…" />
+      <input id="search" type="search" data-i18n-placeholder="searchPlaceholder" />
     </div>
-    <button id="discardNow" class="primary" title="Açık olan ve kilitli olanlar hariç hepsini uyut">
+    <button id="discardNow" class="primary" data-i18n-title="discardAllTitle">
       <svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
-      Hepsini uyut
+      <span data-i18n="discardAll"></span>
     </button>
   </div>
 
@@ -67,27 +71,55 @@
   <details id="settings">
     <summary>
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-      Ayarlar
+      <span data-i18n="settings"></span>
     </summary>
     <div class="settings-body">
       <label class="row">
-        <span>Uyutma süresi</span>
+        <span data-i18n="sleepAfter"></span>
         <span class="stepper">
           <button type="button" data-step="-1">−</button>
           <input type="number" id="minutes" min="1" max="240" step="1" />
           <button type="button" data-step="1">+</button>
-          <em>dk</em>
+          <em data-i18n="unitMinutes"></em>
         </span>
       </label>
-      <label class="row"><span>Sabitlenmiş sekmeleri atla</span><input type="checkbox" id="skipPinned" class="toggle" /></label>
-      <label class="row"><span>Ses çalan sekmeleri atla</span><input type="checkbox" id="skipAudible" class="toggle" /></label>
-      <label class="row"><span>Uyutunca bildirim göster</span><input type="checkbox" id="notify" class="toggle" /></label>
+      <label class="row"><span data-i18n="skipPinned"></span><input type="checkbox" id="skipPinned" class="toggle" /></label>
+      <label class="row"><span data-i18n="skipAudible"></span><input type="checkbox" id="skipAudible" class="toggle" /></label>
+      <label class="row"><span data-i18n="notifyLabel"></span><input type="checkbox" id="notify" class="toggle" /></label>
 
-      <div class="sub">Asla uyutulmayacak siteler</div>
-      <textarea id="whitelist" rows="3" placeholder="her satıra bir alan adı&#10;ör. youtube.com"></textarea>
+      <label class="row">
+        <span>
+          <span data-i18n="pressureMode"></span>
+          <small class="hint" data-i18n="pressureHint"></small>
+        </span>
+        <input type="checkbox" id="pressureMode" class="toggle" />
+      </label>
+      <div id="pressureOpts" class="indent">
+        <label class="row">
+          <span data-i18n="pressureThreshold"></span>
+          <span class="stepper">
+            <button type="button" data-step="-5">−</button>
+            <input type="number" id="pressureThreshold" min="50" max="95" step="5" />
+            <button type="button" data-step="5">+</button>
+            <em>%</em>
+          </span>
+        </label>
+        <label class="row">
+          <span data-i18n="pressureMinutes"></span>
+          <span class="stepper">
+            <button type="button" data-step="-1">−</button>
+            <input type="number" id="pressureMinutes" min="1" max="60" step="1" />
+            <button type="button" data-step="1">+</button>
+            <em data-i18n="unitMinutes"></em>
+          </span>
+        </label>
+      </div>
+
+      <div class="sub" data-i18n="whitelistTitle"></div>
+      <textarea id="whitelist" rows="3" data-i18n-placeholder="whitelistPlaceholder"></textarea>
       <div class="btn-row">
-        <button id="addCurrent" class="ghost">Bu siteyi ekle</button>
-        <button id="resetTotals" class="ghost">Toplamı sıfırla</button>
+        <button id="addCurrent" class="ghost" data-i18n="addCurrent"></button>
+        <button id="resetTotals" class="ghost" data-i18n="resetTotals"></button>
       </div>
     </div>
   </details>

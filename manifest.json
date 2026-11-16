@@ -1,16 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "Ramnesia – Otomatik Sekme Uyutucu",
-  "short_name": "Ramnesia",
+  "name": "__MSG_extName__",
+  "short_name": "__MSG_extName__",
   "version": "1.3.0",
-  "description": "Belirli bir süre girilmeyen sekmeleri Chrome'un bellek tasarrufu moduna alır, ne kadar RAM kazandırdığını gösterir.",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "permissions": ["tabs", "alarms", "storage", "scripting", "notifications", "system.memory"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Ramnesia",
+    "default_title": "__MSG_extName__",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

@@ -1,0 +1,330 @@
+{
+  "extName": {
+    "message": "Ramnesia",
+    "description": "Extension name (not translated)"
+  },
+  "extDescription": {
+    "message": "Belirli bir süre girilmeyen sekmeleri Chrome'un bellek tasarrufu moduna alır, ne kadar RAM kazandırdığını gösterir.",
+    "description": "Extension description"
+  },
+  "toggleTitle": {
+    "message": "Aç / Kapat",
+    "description": "Main switch tooltip"
+  },
+  "modeOnMinutes": {
+    "message": "$MINUTES$ dk girilmeyen sekmeler uyutulur",
+    "description": "Header subtitle when enabled",
+    "placeholders": {
+      "minutes": {
+        "content": "$1"
+      }
+    }
+  },
+  "modeOnPressure": {
+    "message": "RAM yüksek: $MINUTES$ dk girilmeyen sekmeler uyutulur",
+    "description": "Header subtitle when pressure mode is active",
+    "placeholders": {
+      "minutes": {
+        "content": "$1"
+      }
+    }
+  },
+  "modeOff": {
+    "message": "Otomatik uyutma kapalı",
+    "description": "Header subtitle when disabled"
+  },
+  "systemMemory": {
+    "message": "Sistem belleği",
+    "description": "Hero card label"
+  },
+  "pressurePill": {
+    "message": "RAM yüksek · hızlı uyutma açık",
+    "description": "Amber pill when pressure mode is active"
+  },
+  "pressurePillTitle": {
+    "message": "RAM kullanımı %$THRESHOLD$ üzerinde, boşta sekmeler daha erken uyutuluyor",
+    "description": "Pill tooltip",
+    "placeholders": {
+      "threshold": {
+        "content": "$1"
+      }
+    }
+  },
+  "meterTitle": {
+    "message": "Beyaz: diğer kullanım · yeşil: aktif sekmeler",
+    "description": "Memory meter tooltip"
+  },
+  "percentValue": {
+    "message": "%$PCT$",
+    "description": "Percentage",
+    "placeholders": {
+      "pct": {
+        "content": "$1"
+      }
+    }
+  },
+  "freeMemory": {
+    "message": "$SIZE$ boş",
+    "description": "Free system memory",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "totalGain": {
+    "message": "Toplam kazanç: $SIZE$",
+    "description": "Total memory freed since install",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "totalGainTitle": {
+    "message": "Kurulumdan beri $COUNT$ kez sekme uyutuldu",
+    "description": "Total tooltip",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "unknown": {
+    "message": "Bilinmiyor",
+    "description": "System memory unavailable"
+  },
+  "awakeTabs": {
+    "message": "Aktif sekmeler",
+    "description": "Tile label"
+  },
+  "awakeCount": {
+    "message": "$COUNT$ sekme açık",
+    "description": "Number of awake tabs",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "freedLabel": {
+    "message": "Boşaltılan",
+    "description": "Tile label"
+  },
+  "sleepingOfTotal": {
+    "message": "$SLEEPING$ / $TOTAL$ sekme uyuyor",
+    "description": "Sleeping tab count",
+    "placeholders": {
+      "sleeping": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "heroNote": {
+    "message": "Sekme değerleri sayfaların ölçülen JS belleğidir; Chrome'un gerçek kullanımı genelde daha fazladır.",
+    "description": "Note under tiles"
+  },
+  "freedToast": {
+    "message": "+$SIZE$ bellek boşaltıldı",
+    "description": "Toast when memory was freed",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "searchPlaceholder": {
+    "message": "Sekme ara…",
+    "description": "Search box placeholder"
+  },
+  "discardAll": {
+    "message": "Hepsini uyut",
+    "description": "Sleep all button"
+  },
+  "discardAllTitle": {
+    "message": "Açık olan ve kilitli olanlar hariç hepsini uyut",
+    "description": "Sleep all tooltip"
+  },
+  "statusSleeping": {
+    "message": "💤 Uyuyor",
+    "description": "Tab status"
+  },
+  "freedAmount": {
+    "message": "$SIZE$ boşaltıldı",
+    "description": "Memory freed by a tab",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "reasonLocked": {
+    "message": "Kilitli",
+    "description": "Tab status"
+  },
+  "reasonActive": {
+    "message": "Şu an açık",
+    "description": "Tab status"
+  },
+  "reasonPinned": {
+    "message": "Sabitlenmiş",
+    "description": "Tab status"
+  },
+  "reasonAudible": {
+    "message": "Ses çalıyor",
+    "description": "Tab status"
+  },
+  "reasonWhitelist": {
+    "message": "Beyaz listede",
+    "description": "Tab status"
+  },
+  "sleepSoon": {
+    "message": "Birazdan uyuyacak",
+    "description": "Tab status"
+  },
+  "sleepInMinutes": {
+    "message": "$MINUTES$ dk sonra uyuyacak",
+    "description": "Tab status",
+    "placeholders": {
+      "minutes": {
+        "content": "$1"
+      }
+    }
+  },
+  "noMatch": {
+    "message": "Eşleşen sekme yok",
+    "description": "Empty search result"
+  },
+  "noTabs": {
+    "message": "Açık web sitesi yok",
+    "description": "Empty tab list"
+  },
+  "clickToSwitch": {
+    "message": "Sekmeye gitmek için tıkla",
+    "description": "Tab row tooltip"
+  },
+  "sleepNow": {
+    "message": "Şimdi uyut",
+    "description": "Per-tab sleep button"
+  },
+  "cantSleep": {
+    "message": "Bu sekme uyutulamadı",
+    "description": "Toast"
+  },
+  "lockTitle": {
+    "message": "Kilitle (asla uyutma)",
+    "description": "Lock button tooltip"
+  },
+  "unlockTitle": {
+    "message": "Kilidi kaldır (uyutulabilir)",
+    "description": "Unlock button tooltip"
+  },
+  "lockedToast": {
+    "message": "Kilitlendi – bu sekme uyutulmayacak",
+    "description": "Toast"
+  },
+  "unlockedToast": {
+    "message": "Kilit kaldırıldı",
+    "description": "Toast"
+  },
+  "changeFailed": {
+    "message": "Değiştirilemedi",
+    "description": "Toast"
+  },
+  "settings": {
+    "message": "Ayarlar",
+    "description": "Settings section"
+  },
+  "settingsSaved": {
+    "message": "Ayarlar kaydedildi",
+    "description": "Toast"
+  },
+  "sleepAfter": {
+    "message": "Uyutma süresi",
+    "description": "Minutes setting"
+  },
+  "unitMinutes": {
+    "message": "dk",
+    "description": "Minutes unit"
+  },
+  "skipPinned": {
+    "message": "Sabitlenmiş sekmeleri atla",
+    "description": "Setting"
+  },
+  "skipAudible": {
+    "message": "Ses çalan sekmeleri atla",
+    "description": "Setting"
+  },
+  "notifyLabel": {
+    "message": "Uyutunca bildirim göster",
+    "description": "Setting"
+  },
+  "pressureMode": {
+    "message": "RAM yüksekken hızlı uyut",
+    "description": "Pressure mode toggle"
+  },
+  "pressureHint": {
+    "message": "Sistem RAM kullanımı eşiği aşınca boşta sekmeler daha erken uyutulur",
+    "description": "Pressure mode hint"
+  },
+  "pressureThreshold": {
+    "message": "RAM eşiği",
+    "description": "Pressure threshold setting"
+  },
+  "pressureMinutes": {
+    "message": "Hızlı uyutma süresi",
+    "description": "Pressure minutes setting"
+  },
+  "whitelistTitle": {
+    "message": "Asla uyutulmayacak siteler",
+    "description": "Whitelist heading"
+  },
+  "whitelistPlaceholder": {
+    "message": "her satıra bir alan adı\nör. youtube.com",
+    "description": "Whitelist placeholder"
+  },
+  "addCurrent": {
+    "message": "Bu siteyi ekle",
+    "description": "Button"
+  },
+  "resetTotals": {
+    "message": "Toplamı sıfırla",
+    "description": "Button"
+  },
+  "cantAddPage": {
+    "message": "Bu sayfa eklenemez",
+    "description": "Toast"
+  },
+  "addedToList": {
+    "message": "$HOST$ listeye eklendi",
+    "description": "Toast",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "totalsReset": {
+    "message": "Toplam istatistik sıfırlandı",
+    "description": "Toast"
+  },
+  "nothingToSleep": {
+    "message": "Uyutulacak sekme yok",
+    "description": "Toast"
+  },
+  "notifyDiscarded": {
+    "message": "$COUNT$ sekme uyutuldu · ~$SIZE$ bellek boşaltıldı",
+    "description": "Desktop notification",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "size": {
+        "content": "$2"
+      }
+    }
+  }
+}

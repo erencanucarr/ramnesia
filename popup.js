@@ -4,15 +4,45 @@ const DEFAULTS = {
   skipPinned: true,
   skipAudible: true,
   notify: false,
-  whitelist: []
+  whitelist: [],
+  pressureMode: false,
+  pressureThreshold: 85,
+  pressureMinutes: 1
+};
+
+// sayı alanları: [min, max, varsayılan]
+const NUM_LIMITS = {
+  minutes: [1, 240, DEFAULTS.minutes],
+  pressureThreshold: [50, 95, DEFAULTS.pressureThreshold],
+  pressureMinutes: [1, 60, DEFAULTS.pressureMinutes]
 };
 
 const $ = (id) => document.getElementById(id);
 const send = (msg) => chrome.runtime.sendMessage(msg);
 
+// --- yerelleştirme ---------------------------------------------------------
+
+const i18n = (key, ...subs) => chrome.i18n.getMessage(key, subs.map(String)) || key;
+const UI_LANG = chrome.i18n.getUILanguage();
+const DECIMAL_SEP = /^tr\b/i.test(UI_LANG) ? "," : ".";
+
+function localizePage() {
+  document.documentElement.lang = UI_LANG;
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = i18n(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+    el.placeholder = i18n(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+    el.title = i18n(el.dataset.i18nTitle);
+  });
+}
+localizePage();
+
 function fmtBytes(b) {
   const mb = b / (1024 * 1024);
-  if (mb >= 1024) return (mb / 1024).toFixed(1).replace(".", ",") + " GB";
+  if (mb >= 1024) return (mb / 1024).toFixed(1).replace(".", DECIMAL_SEP) + " GB";
   return Math.round(mb) + " MB";
 }
 
@@ -33,6 +63,18 @@ const ICONS = {
 
 // --- ayarlar ---------------------------------------------------------------
 
+let current = { ...DEFAULTS };  // son kaydedilen ayarlar
+let pressure = { active: false, minutes: null }; // arka plandan gelen RAM baskısı durumu
+
+function readNum(id) {
+  const [min, max, def] = NUM_LIMITS[id];
+  let n = parseInt($(id).value, 10);
+  if (!Number.isFinite(n)) n = def;
+  n = Math.min(max, Math.max(min, n));
+  $(id).value = n;
+  return n;
+}
+
 async function loadSettings() {
   const s = { ...DEFAULTS, ...(await chrome.storage.sync.get(DEFAULTS)) };
   $("enabled").checked = s.enabled;
@@ -40,12 +82,31 @@ async function loadSettings() {
   $("skipPinned").checked = s.skipPinned;
   $("skipAudible").checked = s.skipAudible;
   $("notify").checked = s.notify;
+  $("pressureMode").checked = s.pressureMode;
+  $("pressureThreshold").value = s.pressureThreshold;
+  $("pressureMinutes").value = s.pressureMinutes;
   $("whitelist").value = s.whitelist.join("\n");
-  applyEnabled(s.enabled, s.minutes);
+  current = s;
+  readNum("pressureThreshold");
+  readNum("pressureMinutes");
+  applyPressureOpts(s.pressureMode);
+  renderMode();
 }
 
-function applyEnabled(on, minutes) {
-  $("modeText").textContent = on ? `${minutes} dk girilmeyen sekmeler uyutulur` : "Otomatik uyutma kapalı";
+function applyPressureOpts(on) {
+  $("pressureOpts").hidden = !on;
+  $("pressureOpts").querySelectorAll("input, button").forEach((el) => (el.disabled = !on));
+}
+
+function renderMode() {
+  const active = current.enabled && current.pressureMode && pressure.active;
+  let text;
+  if (!current.enabled) text = i18n("modeOff");
+  else if (active) text = i18n("modeOnPressure", pressure.minutes ?? Math.min(current.minutes, current.pressureMinutes));
+  else text = i18n("modeOnMinutes", current.minutes);
+  $("modeText").textContent = text;
+  $("pressurePill").hidden = !active;
+  $("pressurePill").title = active ? i18n("pressurePillTitle", current.pressureThreshold) : "";
 }
 
 function parseWhitelist() {
@@ -58,21 +119,22 @@ function parseWhitelist() {
 }
 
 async function save(quiet) {
-  let minutes = parseInt($("minutes").value, 10);
-  if (!Number.isFinite(minutes) || minutes < 1) minutes = 1;
-  if (minutes > 240) minutes = 240;
-  $("minutes").value = minutes;
   const s = {
     enabled: $("enabled").checked,
-    minutes,
+    minutes: readNum("minutes"),
     skipPinned: $("skipPinned").checked,
     skipAudible: $("skipAudible").checked,
     notify: $("notify").checked,
+    pressureMode: $("pressureMode").checked,
+    pressureThreshold: readNum("pressureThreshold"),
+    pressureMinutes: readNum("pressureMinutes"),
     whitelist: parseWhitelist()
   };
   await chrome.storage.sync.set(s);
-  applyEnabled(s.enabled, s.minutes);
-  if (!quiet) toast("Ayarlar kaydedildi");
+  current = s;
+  applyPressureOpts(s.pressureMode);
+  renderMode();
+  if (!quiet) toast(i18n("settingsSaved"));
   refresh();
 }
 
@@ -85,14 +147,16 @@ async function renderStats() {
   if (!r || r.error) return;
   const el = $("savedNow");
   el.textContent = (r.hasEstimate ? "≈ " : "") + fmtBytes(r.savedNow);
-  $("sleepCount").textContent = `${r.discarded} / ${r.total} sekme uyuyor`;
-  $("totalSaved").textContent = `Toplam kazanç: ${fmtBytes(r.totals.bytes)}`;
-  $("totalSaved").title = `Kurulumdan beri ${r.totals.count} kez sekme uyutuldu`;
+  $("sleepCount").textContent = i18n("sleepingOfTotal", r.discarded, r.total);
+  $("totalSaved").textContent = i18n("totalGain", fmtBytes(r.totals.bytes));
+  $("totalSaved").title = i18n("totalGainTitle", r.totals.count);
   system = r.system;
+  pressure = { active: !!r.pressureActive, minutes: r.effectiveMinutes ?? null };
+  renderMode();
   renderSystem();
 
   if (lastSavedNow != null && r.savedNow > lastSavedNow) {
-    toast(`+${fmtBytes(r.savedNow - lastSavedNow)} bellek boşaltıldı`);
+    toast(i18n("freedToast", fmtBytes(r.savedNow - lastSavedNow)));
     el.classList.remove("bump");
     void el.offsetWidth;
     el.classList.add("bump");
@@ -107,16 +171,16 @@ let awakeBytes = 0;
 
 function renderSystem() {
   if (!system) {
-    $("sysUsed").textContent = "Bilinmiyor";
+    $("sysUsed").textContent = i18n("unknown");
     return;
   }
   const used = system.capacity - system.available;
   const pct = Math.round((used / system.capacity) * 100);
   $("sysUsed").textContent = fmtBytes(used);
   $("sysCap").textContent = `/ ${fmtBytes(system.capacity)}`;
-  $("sysPct").textContent = `%${pct}`;
-  $("sysPct").classList.toggle("high", pct >= 85);
-  $("sysFree").textContent = `${fmtBytes(system.available)} boş`;
+  $("sysPct").textContent = i18n("percentValue", pct);
+  $("sysPct").classList.toggle("high", pct >= (current.pressureMode ? current.pressureThreshold : 85));
+  $("sysFree").textContent = i18n("freeMemory", fmtBytes(system.available));
   const tabsPct = Math.min(pct, (awakeBytes / system.capacity) * 100);
   $("meterTabs").style.width = `${tabsPct}%`;
   $("meterOther").style.width = `${pct - tabsPct}%`;
@@ -127,9 +191,8 @@ function renderAwake() {
   const measured = awake.filter((t) => t.memory);
   awakeBytes = measured.reduce((a, t) => a + t.memory, 0);
   $("awakeMem").textContent = measured.length ? fmtBytes(awakeBytes) : "–";
-  $("awakeCount").textContent = `${awake.length} sekme açık`;
-  $("heroNote").textContent =
-    "Sekme değerleri sayfaların ölçülen JS belleğidir; Chrome'un gerçek kullanımı genelde daha fazladır.";
+  $("awakeCount").textContent = i18n("awakeCount", awake.length);
+  $("heroNote").textContent = i18n("heroNote");
   renderSystem();
 }
 
@@ -140,20 +203,20 @@ let tabs = [];
 function statusParts(t) {
   if (t.discarded) {
     return t.saved
-      ? [["good", `💤 Uyuyor`], ["", `${t.saved.estimated ? "≈ " : ""}${fmtBytes(t.saved.bytes)} boşaltıldı`]]
-      : [["good", "💤 Uyuyor"]];
+      ? [["good", i18n("statusSleeping")], ["", i18n("freedAmount", (t.saved.estimated ? "≈ " : "") + fmtBytes(t.saved.bytes))]]
+      : [["good", i18n("statusSleeping")]];
   }
   const mem = t.memory ? [["", fmtBytes(t.memory)]] : [];
   const map = {
-    locked: ["lock", "Kilitli"],
-    active: ["", "Şu an açık"],
-    pinned: ["", "Sabitlenmiş"],
-    audible: ["", "Ses çalıyor"],
-    whitelist: ["", "Beyaz listede"]
+    locked: ["lock", i18n("reasonLocked")],
+    active: ["", i18n("reasonActive")],
+    pinned: ["", i18n("reasonPinned")],
+    audible: ["", i18n("reasonAudible")],
+    whitelist: ["", i18n("reasonWhitelist")]
   };
   if (t.reason) return [map[t.reason], ...mem];
   const min = Math.ceil(t.remainingMs / 60000);
-  const when = t.remainingMs <= 60000 ? ["soon", "Birazdan uyuyacak"] : ["", `${min} dk sonra uyuyacak`];
+  const when = t.remainingMs <= 60000 ? ["soon", i18n("sleepSoon")] : ["", i18n("sleepInMinutes", min)];
   return [when, ...mem];
 }
 
@@ -176,7 +239,7 @@ function renderTabs() {
   if (!list.length) {
     const li = document.createElement("li");
     li.className = "empty";
-    li.textContent = q ? "Eşleşen sekme yok" : "Açık web sitesi yok";
+    li.textContent = q ? i18n("noMatch") : i18n("noTabs");
     ul.append(li);
     return;
   }
@@ -187,7 +250,7 @@ function renderTabs() {
 
     const info = document.createElement("div");
     info.className = "info";
-    info.title = `${t.title}\n${t.host}\nSekmeye gitmek için tıkla`;
+    info.title = `${t.title}\n${t.host}\n${i18n("clickToSwitch")}`;
     const title = Object.assign(document.createElement("div"), { className: "title", textContent: t.title });
     const status = document.createElement("div");
     status.className = "status";
@@ -206,22 +269,22 @@ function renderTabs() {
     const sleep = document.createElement("button");
     sleep.className = "icon-btn";
     sleep.innerHTML = ICONS.moon;
-    sleep.title = "Şimdi uyut";
+    sleep.title = i18n("sleepNow");
     sleep.disabled = t.discarded || t.active || t.locked;
     sleep.addEventListener("click", async () => {
       const r = await send({ type: "discardOne", tabId: t.id });
-      if (!r?.ok) toast("Bu sekme uyutulamadı");
+      if (!r?.ok) toast(i18n("cantSleep"));
       refresh();
     });
 
     const lock = document.createElement("button");
     lock.className = "icon-btn" + (t.locked ? " on" : "");
     lock.innerHTML = t.locked ? ICONS.lock : ICONS.unlock;
-    lock.title = t.locked ? "Kilidi kaldır (uyutulabilir)" : "Kilitle (asla uyutma)";
+    lock.title = t.locked ? i18n("unlockTitle") : i18n("lockTitle");
     lock.addEventListener("click", async () => {
       const r = await send({ type: "setLock", tabId: t.id, locked: !t.locked });
-      if (r?.ok) toast(t.locked ? "Kilit kaldırıldı" : "Kilitlendi – bu sekme uyutulmayacak");
-      else toast("Değiştirilemedi");
+      if (r?.ok) toast(t.locked ? i18n("unlockedToast") : i18n("lockedToast"));
+      else toast(i18n("changeFailed"));
       refresh();
     });
 
@@ -249,15 +312,20 @@ const refresh = () => Promise.all([renderStats(), loadTabs()]);
 
 // --- olaylar ---------------------------------------------------------------
 
-["enabled", "skipPinned", "skipAudible", "notify"].forEach((id) =>
+["enabled", "skipPinned", "skipAudible", "notify", "pressureMode"].forEach((id) =>
   $(id).addEventListener("change", () => save())
 );
-$("minutes").addEventListener("change", () => save());
+["minutes", "pressureThreshold", "pressureMinutes"].forEach((id) =>
+  $(id).addEventListener("change", () => save())
+);
 $("whitelist").addEventListener("change", () => save());
 document.querySelectorAll("[data-step]").forEach((b) =>
   b.addEventListener("click", (e) => {
     e.preventDefault();
-    $("minutes").value = (parseInt($("minutes").value, 10) || 1) + Number(b.dataset.step);
+    const input = b.closest(".stepper").querySelector("input");
+    if (input.disabled) return;
+    const base = parseInt(input.value, 10) || NUM_LIMITS[input.id][2];
+    input.value = base + Number(b.dataset.step);
     save(true);
   })
 );
@@ -267,23 +335,23 @@ $("addCurrent").addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   let host = "";
   try { host = new URL(tab.url).hostname.replace(/^www\./, ""); } catch {}
-  if (!host || !/^https?:/.test(tab.url)) return toast("Bu sayfa eklenemez");
+  if (!host || !/^https?:/.test(tab.url)) return toast(i18n("cantAddPage"));
   const list = parseWhitelist();
   if (!list.includes(host)) list.push(host);
   $("whitelist").value = list.join("\n");
   await save(true);
-  toast(`${host} listeye eklendi`);
+  toast(i18n("addedToList", host));
 });
 
 $("resetTotals").addEventListener("click", async () => {
   await send({ type: "resetTotals" });
-  toast("Toplam istatistik sıfırlandı");
+  toast(i18n("totalsReset"));
   refresh();
 });
 
 $("discardNow").addEventListener("click", async () => {
   const r = await send({ type: "discardNow" });
-  if (!r?.count) toast("Uyutulacak sekme yok");
+  if (!r?.count) toast(i18n("nothingToSleep"));
   // artış baloncuğu renderStats içinde gösterilir
   refresh();
 });

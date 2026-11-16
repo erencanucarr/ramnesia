@@ -66,6 +66,13 @@ h1 { font-size: 15px; margin: 0; }
   background: rgba(255,255,255,.18); font-variant-numeric: tabular-nums;
 }
 .hero-pct.high { background: #f59e0b; color: #1f1300; }
+.pressure-pill {
+  display: inline-flex; align-items: center; gap: 4px; margin: -4px 0 8px;
+  font-size: 11px; font-weight: 700; padding: 2px 8px 2px 6px; border-radius: 20px;
+  background: #f59e0b; color: #1f1300;
+}
+.pressure-pill[hidden] { display: none; }
+.pressure-pill svg { width: 12px; height: 12px; stroke-width: 2.4; }
 .meter { display: flex; height: 7px; border-radius: 7px; background: rgba(255,255,255,.2); overflow: hidden; }
 .meter > div { height: 100%; transition: width .4s ease; }
 #meterOther { width: 0; background: rgba(255,255,255,.85); }
@@ -138,6 +145,10 @@ details[open] summary { color: var(--fg); }
 .settings-body { padding: 4px 2px 2px; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; }
 .sub { margin-top: 8px; font-weight: 600; }
+.hint { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+.indent { padding-left: 12px; border-left: 2px solid var(--line); margin-left: 2px; }
+.indent[hidden] { display: none; }
+.stepper input:disabled, .stepper button:disabled { opacity: .45; cursor: default; }
 .stepper { display: flex; align-items: center; gap: 4px; }
 .stepper button {
   width: 24px; height: 24px; border: 1px solid var(--line); border-radius: 6px;

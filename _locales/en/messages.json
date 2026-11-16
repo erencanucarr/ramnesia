@@ -1,0 +1,330 @@
+{
+  "extName": {
+    "message": "Ramnesia",
+    "description": "Extension name (not translated)"
+  },
+  "extDescription": {
+    "message": "Puts tabs you haven't visited for a while into Chrome's memory saver mode and shows how much RAM it freed.",
+    "description": "Extension description"
+  },
+  "toggleTitle": {
+    "message": "On / Off",
+    "description": "Main switch tooltip"
+  },
+  "modeOnMinutes": {
+    "message": "Tabs idle for $MINUTES$ min are put to sleep",
+    "description": "Header subtitle when enabled",
+    "placeholders": {
+      "minutes": {
+        "content": "$1"
+      }
+    }
+  },
+  "modeOnPressure": {
+    "message": "RAM is high: tabs idle for $MINUTES$ min are put to sleep",
+    "description": "Header subtitle when pressure mode is active",
+    "placeholders": {
+      "minutes": {
+        "content": "$1"
+      }
+    }
+  },
+  "modeOff": {
+    "message": "Auto-sleep is off",
+    "description": "Header subtitle when disabled"
+  },
+  "systemMemory": {
+    "message": "System memory",
+    "description": "Hero card label"
+  },
+  "pressurePill": {
+    "message": "RAM high · fast mode on",
+    "description": "Amber pill when pressure mode is active"
+  },
+  "pressurePillTitle": {
+    "message": "RAM usage is above $THRESHOLD$%, so idle tabs are put to sleep sooner",
+    "description": "Pill tooltip",
+    "placeholders": {
+      "threshold": {
+        "content": "$1"
+      }
+    }
+  },
+  "meterTitle": {
+    "message": "White: other usage · green: active tabs",
+    "description": "Memory meter tooltip"
+  },
+  "percentValue": {
+    "message": "$PCT$%",
+    "description": "Percentage",
+    "placeholders": {
+      "pct": {
+        "content": "$1"
+      }
+    }
+  },
+  "freeMemory": {
+    "message": "$SIZE$ free",
+    "description": "Free system memory",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "totalGain": {
+    "message": "Total saved: $SIZE$",
+    "description": "Total memory freed since install",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "totalGainTitle": {
+    "message": "Tabs put to sleep since install: $COUNT$",
+    "description": "Total tooltip",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "unknown": {
+    "message": "Unknown",
+    "description": "System memory unavailable"
+  },
+  "awakeTabs": {
+    "message": "Active tabs",
+    "description": "Tile label"
+  },
+  "awakeCount": {
+    "message": "$COUNT$ open",
+    "description": "Number of awake tabs",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "freedLabel": {
+    "message": "Freed",
+    "description": "Tile label"
+  },
+  "sleepingOfTotal": {
+    "message": "$SLEEPING$ / $TOTAL$ tabs asleep",
+    "description": "Sleeping tab count",
+    "placeholders": {
+      "sleeping": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "heroNote": {
+    "message": "Tab values are the measured JS memory of each page; Chrome's actual usage is usually higher.",
+    "description": "Note under tiles"
+  },
+  "freedToast": {
+    "message": "+$SIZE$ memory freed",
+    "description": "Toast when memory was freed",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "searchPlaceholder": {
+    "message": "Search tabs…",
+    "description": "Search box placeholder"
+  },
+  "discardAll": {
+    "message": "Sleep all",
+    "description": "Sleep all button"
+  },
+  "discardAllTitle": {
+    "message": "Put every tab to sleep except the open and locked ones",
+    "description": "Sleep all tooltip"
+  },
+  "statusSleeping": {
+    "message": "💤 Asleep",
+    "description": "Tab status"
+  },
+  "freedAmount": {
+    "message": "$SIZE$ freed",
+    "description": "Memory freed by a tab",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "reasonLocked": {
+    "message": "Locked",
+    "description": "Tab status"
+  },
+  "reasonActive": {
+    "message": "Open now",
+    "description": "Tab status"
+  },
+  "reasonPinned": {
+    "message": "Pinned",
+    "description": "Tab status"
+  },
+  "reasonAudible": {
+    "message": "Playing audio",
+    "description": "Tab status"
+  },
+  "reasonWhitelist": {
+    "message": "Whitelisted",
+    "description": "Tab status"
+  },
+  "sleepSoon": {
+    "message": "Sleeping soon",
+    "description": "Tab status"
+  },
+  "sleepInMinutes": {
+    "message": "Sleeps in $MINUTES$ min",
+    "description": "Tab status",
+    "placeholders": {
+      "minutes": {
+        "content": "$1"
+      }
+    }
+  },
+  "noMatch": {
+    "message": "No matching tabs",
+    "description": "Empty search result"
+  },
+  "noTabs": {
+    "message": "No websites open",
+    "description": "Empty tab list"
+  },
+  "clickToSwitch": {
+    "message": "Click to go to this tab",
+    "description": "Tab row tooltip"
+  },
+  "sleepNow": {
+    "message": "Sleep now",
+    "description": "Per-tab sleep button"
+  },
+  "cantSleep": {
+    "message": "This tab couldn't be put to sleep",
+    "description": "Toast"
+  },
+  "lockTitle": {
+    "message": "Lock (never sleep)",
+    "description": "Lock button tooltip"
+  },
+  "unlockTitle": {
+    "message": "Unlock (can sleep)",
+    "description": "Unlock button tooltip"
+  },
+  "lockedToast": {
+    "message": "Locked – this tab won't be put to sleep",
+    "description": "Toast"
+  },
+  "unlockedToast": {
+    "message": "Unlocked",
+    "description": "Toast"
+  },
+  "changeFailed": {
+    "message": "Couldn't change it",
+    "description": "Toast"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Settings section"
+  },
+  "settingsSaved": {
+    "message": "Settings saved",
+    "description": "Toast"
+  },
+  "sleepAfter": {
+    "message": "Sleep after",
+    "description": "Minutes setting"
+  },
+  "unitMinutes": {
+    "message": "min",
+    "description": "Minutes unit"
+  },
+  "skipPinned": {
+    "message": "Skip pinned tabs",
+    "description": "Setting"
+  },
+  "skipAudible": {
+    "message": "Skip tabs playing audio",
+    "description": "Setting"
+  },
+  "notifyLabel": {
+    "message": "Notify when tabs are put to sleep",
+    "description": "Setting"
+  },
+  "pressureMode": {
+    "message": "Sleep faster when RAM is high",
+    "description": "Pressure mode toggle"
+  },
+  "pressureHint": {
+    "message": "Idle tabs sleep sooner while system RAM usage is above the threshold",
+    "description": "Pressure mode hint"
+  },
+  "pressureThreshold": {
+    "message": "RAM threshold",
+    "description": "Pressure threshold setting"
+  },
+  "pressureMinutes": {
+    "message": "Fast sleep after",
+    "description": "Pressure minutes setting"
+  },
+  "whitelistTitle": {
+    "message": "Sites never put to sleep",
+    "description": "Whitelist heading"
+  },
+  "whitelistPlaceholder": {
+    "message": "one domain per line\ne.g. youtube.com",
+    "description": "Whitelist placeholder"
+  },
+  "addCurrent": {
+    "message": "Add this site",
+    "description": "Button"
+  },
+  "resetTotals": {
+    "message": "Reset total",
+    "description": "Button"
+  },
+  "cantAddPage": {
+    "message": "This page can't be added",
+    "description": "Toast"
+  },
+  "addedToList": {
+    "message": "$HOST$ added to the list",
+    "description": "Toast",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "totalsReset": {
+    "message": "Total stats reset",
+    "description": "Toast"
+  },
+  "nothingToSleep": {
+    "message": "No tabs to put to sleep",
+    "description": "Toast"
+  },
+  "notifyDiscarded": {
+    "message": "Put $COUNT$ tab(s) to sleep · ~$SIZE$ freed",
+    "description": "Desktop notification",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "size": {
+        "content": "$2"
+      }
+    }
+  }
+}
