@@ -26,6 +26,8 @@ Chrome's built-in Memory Saver decides on its own when to put tabs to sleep. Ram
 ## Features
 
 - Idle tabs are put to sleep after 5 minutes by default. You can set anything from 1 to 240 minutes.
+- Sleep time per site: for example Gmail after 30 minutes, news sites after 2. Subdomains are included.
+- Right-click menu (on a page or on the toolbar icon): sleep this tab, sleep the other tabs in the window, lock this tab, never sleep this site, and set a sleep time for this site.
 - RAM-pressure mode (off by default). When system RAM usage goes above a threshold (85% by default, adjustable 50–95%), idle tabs are put to sleep sooner (after 1 minute by default).
 - The popup shows system RAM usage, how much memory awake tabs use, how much sleeping tabs have freed, and a running total.
 - The toolbar icon shows the memory currently freed, for example `270M`.
@@ -72,6 +74,7 @@ Chrome (Stable and Beta) does not give extensions a tab's real memory use, so Ra
 | `notifications` | The optional sleep notification |
 | `idle` | Noticing when the computer is locked or idle |
 | `tabGroups` | Sleeping and locking tab groups |
+| `contextMenus` | The right-click menu |
 | `processes` (not declared by default) | Exact per-tab memory on Chrome Dev/Canary, only if you add it yourself |
 
 No data leaves your device.
@@ -93,6 +96,8 @@ Chrome'un kendi Bellek Tasarrufu özelliği sekmeleri ne zaman uyutacağına ken
 ### Özellikler
 
 - Kullanılmayan sekmeler varsayılan olarak 5 dakika sonra uyutulur. Süre 1 ile 240 dakika arasında ayarlanabilir.
+- Siteye özel süre: örneğin Gmail 30 dakika, haber siteleri 2 dakika sonra. Alt alan adları da dahildir.
+- Sağ tık menüsü (sayfada ya da eklenti simgesinde): bu sekmeyi uyut, penceredeki diğer sekmeleri uyut, bu sekmeyi kilitle, bu siteyi hiç uyutma, bu sitenin uyutma süresini seç.
 - RAM doluluk modu (varsayılan olarak kapalı). Sistem RAM kullanımı belirlenen eşiği geçince (varsayılan %85, %50–95 arası ayarlanabilir) sekmeler daha erken uyutulur (varsayılan 1 dakika).
 - Açılır pencerede sistem RAM kullanımı, açık sekmelerin kullandığı bellek, uyuyan sekmelerin boşalttığı bellek ve toplam kazanç görünür.
 - Eklenti simgesinin üstünde o an boşaltılan bellek yazar, örneğin `270M`.

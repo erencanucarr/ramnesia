@@ -157,6 +157,21 @@
     </div>
 
     <div class="set-card">
+      <h3 data-i18n="secSiteTimes"></h3>
+      <small class="hint" data-i18n="siteTimesHint"></small>
+      <ul id="siteRules" class="site-rules"></ul>
+      <div class="site-add">
+        <input id="siteRuleHost" type="text" autocomplete="off" spellcheck="false" data-i18n-placeholder="siteTimesHostPlaceholder" />
+        <span class="stepper">
+          <input type="number" id="siteRuleMinutes" min="1" max="1440" step="1" value="30" />
+          <em data-i18n="unitMinutes"></em>
+        </span>
+        <button id="siteRuleAdd" class="ghost" type="button" data-i18n="siteTimesAdd"></button>
+      </div>
+      <button id="siteRuleCurrent" class="link-btn" type="button" data-i18n="siteTimesUseCurrent"></button>
+    </div>
+
+    <div class="set-card">
       <h3 data-i18n="whitelistTitle"></h3>
       <textarea id="whitelist" rows="3" data-i18n-placeholder="whitelistPlaceholder"></textarea>
       <div class="btn-row">

@@ -659,5 +659,65 @@
   "processes_failedToast": {
     "message": "Couldn't change the permission",
     "description": "Toast when requesting/removing the permission failed"
+  },
+  "menu_sleepTab": {
+    "message": "Sleep this tab"
+  },
+  "menu_sleepOthers": {
+    "message": "Sleep other tabs in this window"
+  },
+  "menu_lockTab": {
+    "message": "Lock this tab (never sleep)"
+  },
+  "menu_neverSite": {
+    "message": "Never sleep this site"
+  },
+  "menu_neverSiteHost": {
+    "message": "Never sleep $1"
+  },
+  "menu_siteTime": {
+    "message": "Sleep time for this site"
+  },
+  "menu_siteTimeHost": {
+    "message": "Sleep time for $1"
+  },
+  "menu_siteDefault": {
+    "message": "Default ($1 min)"
+  },
+  "menu_minutes": {
+    "message": "$1 min"
+  },
+  "menu_hour": {
+    "message": "1 hour"
+  },
+  "secSiteTimes": {
+    "message": "Sleep time per site"
+  },
+  "siteTimesHint": {
+    "message": "These sites use their own sleep time instead of the general one. Subdomains are included."
+  },
+  "siteTimesHostPlaceholder": {
+    "message": "e.g. mail.google.com"
+  },
+  "siteTimesAdd": {
+    "message": "Add"
+  },
+  "siteTimesUseCurrent": {
+    "message": "Use the current site"
+  },
+  "siteTimesEmpty": {
+    "message": "No site-specific times yet. You can also set one from the right-click menu."
+  },
+  "siteTimesRemove": {
+    "message": "Remove"
+  },
+  "siteTimesInvalid": {
+    "message": "Enter a site address, e.g. mail.google.com"
+  },
+  "siteTimeSaved": {
+    "message": "$1: sleeps after $2 min"
+  },
+  "siteTimeRemoved": {
+    "message": "$1 uses the general time again"
   }
 }

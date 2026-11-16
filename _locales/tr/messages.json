@@ -659,5 +659,65 @@
   "processes_failedToast": {
     "message": "İzin değiştirilemedi",
     "description": "İzin isteme/kaldırma başarısız olduğunda gösterilen bildirim"
+  },
+  "menu_sleepTab": {
+    "message": "Bu sekmeyi uyut"
+  },
+  "menu_sleepOthers": {
+    "message": "Bu penceredeki diğer sekmeleri uyut"
+  },
+  "menu_lockTab": {
+    "message": "Bu sekmeyi kilitle (hiç uyutma)"
+  },
+  "menu_neverSite": {
+    "message": "Bu siteyi hiç uyutma"
+  },
+  "menu_neverSiteHost": {
+    "message": "$1 sitesini hiç uyutma"
+  },
+  "menu_siteTime": {
+    "message": "Bu sitenin uyutma süresi"
+  },
+  "menu_siteTimeHost": {
+    "message": "$1 için uyutma süresi"
+  },
+  "menu_siteDefault": {
+    "message": "Varsayılan ($1 dk)"
+  },
+  "menu_minutes": {
+    "message": "$1 dk"
+  },
+  "menu_hour": {
+    "message": "1 saat"
+  },
+  "secSiteTimes": {
+    "message": "Siteye özel süreler"
+  },
+  "siteTimesHint": {
+    "message": "Bu siteler genel süre yerine kendi süreleriyle uyutulur. Alt alan adları da dahildir."
+  },
+  "siteTimesHostPlaceholder": {
+    "message": "ör. mail.google.com"
+  },
+  "siteTimesAdd": {
+    "message": "Ekle"
+  },
+  "siteTimesUseCurrent": {
+    "message": "Açık olan siteyi kullan"
+  },
+  "siteTimesEmpty": {
+    "message": "Henüz siteye özel süre yok. Sağ tık menüsünden de ayarlayabilirsin."
+  },
+  "siteTimesRemove": {
+    "message": "Kaldır"
+  },
+  "siteTimesInvalid": {
+    "message": "Bir site adresi yaz, ör. mail.google.com"
+  },
+  "siteTimeSaved": {
+    "message": "$1: $2 dk sonra uyutulur"
+  },
+  "siteTimeRemoved": {
+    "message": "$1 yine genel süreyi kullanıyor"
   }
 }

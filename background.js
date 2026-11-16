@@ -8,6 +8,7 @@ const DEFAULTS = {
   skipAudible: true,   // ses çalan sekmelere dokunma
   notify: false,       // uyutunca masaüstü bildirimi göster
   whitelist: [],       // hiç uyutulmayacak alan adları (ör. "youtube.com")
+  siteRules: [],       // siteye özel süre: [{ host: "mail.google.com", minutes: 30 }]
   pressureMode: false, // RAM yüksekken boşta sekmeleri daha erken uyut
   pressureThreshold: 85, // % kullanılan RAM (50–95)
   pressureMinutes: 1   // RAM yüksekken uyutma süresi (1–60 dk)
@@ -252,6 +253,33 @@ async function effectiveLimit(s) {
   return { pressureActive, minutes, limitMs: minutes * 60 * 1000 };
 }
 
+// --- siteye özel süre ------------------------------------------------------
+// Kural, alan adına ve alt alan adlarına uyar; birden çok kural uyarsa en uzun (en özel)
+// alan adı kazanır. RAM baskısı etkinse yine en fazla pressureMinutes beklenir.
+
+function siteRuleFor(url, rules) {
+  const host = hostOf(url);
+  if (!host || !Array.isArray(rules)) return null;
+  let best = null;
+  for (const r of rules) {
+    const d = String(r?.host || "").trim().toLowerCase().replace(/^www\./, "");
+    const m = parseInt(r?.minutes, 10);
+    if (!d || !(m >= 1)) continue;
+    if ((host === d || host.endsWith("." + d)) && (!best || d.length > best.host.length)) {
+      best = { host: d, minutes: Math.min(m, 1440) };
+    }
+  }
+  return best;
+}
+
+// eff: effectiveLimit(s) sonucu
+function limitMsForTab(tab, s, eff) {
+  const rule = siteRuleFor(tab.url, s.siteRules);
+  if (!rule) return eff.limitMs;
+  const minutes = eff.pressureActive ? Math.min(rule.minutes, s.pressureMinutes) : rule.minutes;
+  return minutes * 60 * 1000;
+}
+
 // --- uyutma ----------------------------------------------------------------
 
 // Şu an bu eklentinin uyutmakta olduğu sekmeler: onUpdated'deki "Chrome uyuttu" yolu
@@ -319,7 +347,7 @@ async function sweep({ force = false, filter = null, source = force ? "all" : "a
   const tabs = await chrome.tabs.query({});
   const seen = await sget("seen", {});
   const now = Date.now();
-  const { limitMs: limit } = await effectiveLimit(s);
+  const eff = await effectiveLimit(s);
   const candidates = [];
 
   for (const tab of tabs) {
@@ -329,7 +357,7 @@ async function sweep({ force = false, filter = null, source = force ? "all" : "a
     }
     if (seen[tab.id] == null) seen[tab.id] = tab.lastAccessed || now;
     const last = Math.max(seen[tab.id], tab.lastAccessed || 0);
-    if ((force || now - last >= limit) && canDiscard(tab, s) && (!filter || filter(tab))) {
+    if ((force || now - last >= limitMsForTab(tab, s, eff)) && canDiscard(tab, s) && (!filter || filter(tab))) {
       if (!(await extraSkipReason(tab, s))) candidates.push(tab);
     }
   }
@@ -463,7 +491,7 @@ async function tabsInfo() {
   const saved = await sget("saved", {});
   const tabs = (await chrome.tabs.query({})).filter((t) => isWeb(t.url));
   const now = Date.now();
-  const { limitMs: limit } = await effectiveLimit(s);
+  const eff = await effectiveLimit(s);
 
   // Popup ölçümleri beklemesin: süre bütçesi dolunca önbellekteki değerle cevap verilir;
   // başlamış ölçümler arka planda biter ve bir sonraki yenilemede (5 sn) görünür.
@@ -494,7 +522,8 @@ async function tabsInfo() {
         memoryKind: m?.kind ?? null,     // "exact" | "calibrated" | "heap" | null
         heap: m?.heap ?? null,           // ham JS belleği
         saved: saved[t.id] || null,
-        remainingMs: Math.max(0, limit - (now - last))
+        remainingMs: Math.max(0, limitMsForTab(t, s, eff) - (now - last)),
+        siteMinutes: siteRuleFor(t.url, s.siteRules)?.minutes ?? null
       };
     })
   );
@@ -577,5 +606,6 @@ importScripts(
   "features/groups.js",
   "features/realgain.js",
   "features/calibrate.js",
-  "features/processes.js"
+  "features/processes.js",
+  "features/menu.js"
 );
