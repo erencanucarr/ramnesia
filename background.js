@@ -31,8 +31,13 @@ const RN = {
 
 // Bir sekmenin bellek değeri: { bytes, kind, heap } | null
 // heap: ham JS belleği (performance.memory) — kalibrasyon için hep ayrıca taşınır.
-async function tabMemory(tab) {
-  const heap = await measureTab(tab.id);
+// cachedOnly: sayfaya hiç dokunma, önbellekteki (eski olsa da) değeri kullan.
+async function tabMemory(tab, { cachedOnly = false } = {}) {
+  const heap = await measureTab(tab.id, {
+    maxAgeMs: tab.active ? MEM_TTL_ACTIVE_MS : MEM_TTL_BG_MS,
+    // Donmuş sekmeye betik eklemek onu uyandırır (ya da zaman aşımına kadar bekletir).
+    cachedOnly: cachedOnly || !!tab.frozen
+  });
   const providers = [...RN.memoryProviders].sort((a, b) => a.priority - b.priority);
   for (const p of providers) {
     try {
@@ -70,7 +75,13 @@ async function extraSkipReason(tab, s) {
 const ALARM = "ramnesia-tick";
 const CHECK_EVERY_MIN = 0.5;                 // 30 sn'de bir kontrol
 const FALLBACK_BYTES = 50 * 1024 * 1024;     // ölçülemeyen sekme için tahmin
-const MEM_CACHE_MS = 30 * 1000;
+// Bellek ölçümü maliyeti: her ölçüm sekmeye betik ekler (arka plandaki sekmeyi de çalıştırır).
+const MEM_TTL_ACTIVE_MS = 15 * 1000;   // açık sekmenin değeri bu kadar eskiyince yeniden ölç
+const MEM_TTL_BG_MS = 2 * 60 * 1000;   // arka plandaki sekmenin belleği yavaş değişir
+const MEASURE_CONCURRENCY = 6;         // aynı anda en fazla bu kadar sekmeye betik ekle
+const MEASURE_TIMEOUT_MS = 800;
+const MEM_PERSIST_DELAY_MS = 2000;     // önbelleği depoya en fazla bu aralıkla bir kez yaz
+const TABSINFO_BUDGET_MS = 300;        // popup listesi için ölçüm bekleme süresi
 
 // --- depolama yardımcıları -------------------------------------------------
 // session: tarayıcı kapanınca silinir (sekme kimlikleri zaten değişir)
@@ -154,28 +165,71 @@ function fmtBytes(b) {
 let memCacheP = null;
 const getMemCache = () => (memCacheP ??= sget("memCache", {}));
 
-async function measureTab(tabId) {
+// Önbellek yazımı birleştirilir: 200 ölçüm = 200 tam yazma değil, birkaç saniyede bir yazma.
+let memPersistTimer = null;
+function persistMemCache() {
+  if (memPersistTimer) return;
+  memPersistTimer = setTimeout(async () => {
+    memPersistTimer = null;
+    try {
+      await sset({ memCache: await getMemCache() });
+    } catch {}
+  }, MEM_PERSIST_DELAY_MS);
+}
+
+// Eşzamanlılık sınırı: aynı anda en fazla MEASURE_CONCURRENCY ölçüm.
+let measuring = 0;
+const measureWaiters = [];
+async function acquireMeasureSlot() {
+  while (measuring >= MEASURE_CONCURRENCY) await new Promise((r) => measureWaiters.push(r));
+  measuring++;
+}
+function releaseMeasureSlot() {
+  measuring--;
+  measureWaiters.shift()?.();
+}
+
+const measureInflight = new Map(); // tabId → Promise (aynı sekme için ikinci betik eklenmez)
+const measureFailedAt = new Map(); // ölçülemeyen sekmeler (PDF, kısıtlı sayfa…) her yenilemede tekrar denenmesin
+
+async function measureTab(tabId, { maxAgeMs = MEM_TTL_BG_MS, cachedOnly = false } = {}) {
   const cache = await getMemCache();
   const c = cache[tabId];
-  if (c && Date.now() - c.t < MEM_CACHE_MS) return c.bytes;
-  try {
-    const run = chrome.scripting.executeScript({
-      target: { tabId },
-      injectImmediately: true,
-      func: () => (performance.memory ? performance.memory.usedJSHeapSize : null)
-    });
-    run.catch(() => null); // zaman aşımından sonra gelen hata "Uncaught (in promise)" olmasın
-    const timeout = new Promise((r) => setTimeout(() => r(null), 800));
-    const res = await Promise.race([run, timeout]);
-    const bytes = res?.[0]?.result ?? null;
-    if (bytes) {
-      cache[tabId] = { bytes, t: Date.now() };
-      await sset({ memCache: cache });
+  if (c && (cachedOnly || Date.now() - c.t < maxAgeMs)) return c.bytes;
+  if (cachedOnly) return null;
+  if (measureInflight.has(tabId)) return measureInflight.get(tabId);
+  const failed = measureFailedAt.get(tabId);
+  if (!c && failed && Date.now() - failed < maxAgeMs) return null;
+
+  const p = (async () => {
+    await acquireMeasureSlot();
+    try {
+      const run = chrome.scripting.executeScript({
+        target: { tabId },
+        injectImmediately: true,
+        func: () => (performance.memory ? performance.memory.usedJSHeapSize : null)
+      });
+      run.catch(() => null); // zaman aşımından sonra gelen hata "Uncaught (in promise)" olmasın
+      const timeout = new Promise((r) => setTimeout(() => r(null), MEASURE_TIMEOUT_MS));
+      const res = await Promise.race([run, timeout]);
+      const bytes = res?.[0]?.result ?? null;
+      if (bytes) {
+        cache[tabId] = { bytes, t: Date.now() };
+        measureFailedAt.delete(tabId);
+        persistMemCache();
+      } else {
+        measureFailedAt.set(tabId, Date.now());
+      }
+      return bytes ?? c?.bytes ?? null; // ölçülemezse eski değer (varsa)
+    } catch {
+      return c?.bytes ?? null;
+    } finally {
+      releaseMeasureSlot();
+      measureInflight.delete(tabId);
     }
-    return bytes;
-  } catch {
-    return null;
-  }
+  })();
+  measureInflight.set(tabId, p);
+  return p;
 }
 
 // --- RAM baskısı ----------------------------------------------------------
@@ -396,6 +450,7 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
   delete seen[tabId];
   delete saved[tabId];
   delete memCache[tabId];
+  measureFailedAt.delete(tabId);
   await sset({ seen, saved, memCache });
   updateBadge();
 });
@@ -410,10 +465,16 @@ async function tabsInfo() {
   const now = Date.now();
   const { limitMs: limit } = await effectiveLimit(s);
 
+  // Popup ölçümleri beklemesin: süre bütçesi dolunca önbellekteki değerle cevap verilir;
+  // başlamış ölçümler arka planda biter ve bir sonraki yenilemede (5 sn) görünür.
+  const budget = new Promise((r) => setTimeout(r, TABSINFO_BUDGET_MS));
+
   return Promise.all(
     tabs.map(async (t) => {
       const last = Math.max(seen[t.id] || 0, t.lastAccessed || 0) || now;
-      const m = t.discarded ? null : await tabMemory(t);
+      const m = t.discarded
+        ? null
+        : await Promise.race([tabMemory(t), budget.then(() => tabMemory(t, { cachedOnly: true }))]);
       const extras = {};
       for (const h of RN.tabExtras) {
         try { Object.assign(extras, await h(t)); } catch (e) { console.warn(e); }

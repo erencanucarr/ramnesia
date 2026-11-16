@@ -12,12 +12,12 @@ Object.assign(DEFAULTS, {
   const KEY = "guard"; // session: { [tabId]: { [frameId]: { typing, media, doc } } }
   const SCRIPTS = { main: "features/guard.main.js", isolated: "features/guard.content.js" };
 
-  let mirror = null;               // storage.session'ın bellek kopyası (SW yeniden başlayınca tekrar okunur)
+  let mirrorP = null;              // storage.session'ın bellek kopyası (SW yeniden başlayınca tekrar okunur)
   let queue = Promise.resolve();   // okuma-değiştirme-yazma işlemlerini sıraya koyar
 
-  async function load() {
-    if (!mirror) mirror = await sget(KEY, {});
-    return mirror;
+  // Söz (promise) saklanır: soğuk başlangıçta aynı anda gelen çağrılar aynı nesneyi alır.
+  function load() {
+    return (mirrorP ??= sget(KEY, {}));
   }
 
   // fn(all) true dönerse değişiklik kaydedilir.
