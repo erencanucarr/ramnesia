@@ -4,6 +4,10 @@
   <meta charset="utf-8" />
   <title data-i18n="extName">Ramnesia</title>
   <link rel="stylesheet" href="popup.css" />
+  <link rel="stylesheet" href="features/guard.css" />
+  <link rel="stylesheet" href="features/idle.css" />
+  <link rel="stylesheet" href="features/groups.css" />
+  <link rel="stylesheet" href="features/realgain.css" />
 </head>
 <body>
   <header>
@@ -39,6 +43,7 @@
       <span id="sysFree"></span>
       <span id="totalSaved"></span>
     </div>
+    <div id="heroExtra"></div>
   </section>
 
   <div class="tiles">
@@ -66,6 +71,7 @@
     </button>
   </div>
 
+  <div id="groupSection"></div>
   <ul id="tabList"></ul>
 
   <details id="settings">
@@ -115,6 +121,8 @@
         </label>
       </div>
 
+      <div id="featureSettings"></div>
+
       <div class="sub" data-i18n="whitelistTitle"></div>
       <textarea id="whitelist" rows="3" data-i18n-placeholder="whitelistPlaceholder"></textarea>
       <div class="btn-row">
@@ -127,5 +135,9 @@
   <div id="toast" role="status"></div>
 
   <script src="popup.js"></script>
+  <script src="features/guard.popup.js"></script>
+  <script src="features/idle.popup.js"></script>
+  <script src="features/groups.popup.js"></script>
+  <script src="features/realgain.popup.js"></script>
 </body>
 </html>

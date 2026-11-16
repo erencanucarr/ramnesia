@@ -326,5 +326,203 @@
         "content": "$2"
       }
     }
+  },
+  "groups_title": {
+    "message": "Tab groups",
+    "description": "Header of the tab group section in the popup"
+  },
+  "groups_unnamed": {
+    "message": "Unnamed group",
+    "description": "Shown for a tab group without a title"
+  },
+  "groups_tabsOne": {
+    "message": "1 tab",
+    "description": "Tab group sub-line: exactly one tab"
+  },
+  "groups_tabsMany": {
+    "message": "$COUNT$ tabs",
+    "description": "Tab group sub-line: number of tabs",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "groups_asleep": {
+    "message": "$COUNT$ asleep",
+    "description": "Tab group sub-line: number of sleeping tabs",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "groups_lockedPill": {
+    "message": "Locked",
+    "description": "Pill on a locked tab group"
+  },
+  "groups_sleepTitle": {
+    "message": "Put this group to sleep",
+    "description": "Group sleep button tooltip"
+  },
+  "groups_lockTitle": {
+    "message": "Lock group (never sleep its tabs)",
+    "description": "Group lock button tooltip"
+  },
+  "groups_unlockTitle": {
+    "message": "Unlock group (tabs can sleep)",
+    "description": "Group unlock button tooltip"
+  },
+  "groups_lockedToast": {
+    "message": "Group locked – its tabs won't be put to sleep",
+    "description": "Toast after locking a group"
+  },
+  "groups_unlockedToast": {
+    "message": "Group unlocked",
+    "description": "Toast after unlocking a group"
+  },
+  "groups_sleptToast": {
+    "message": "$COUNT$ tab(s) put to sleep · $SIZE$ freed",
+    "description": "Toast after putting a group to sleep",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "4"
+      },
+      "size": {
+        "content": "$2",
+        "example": "320 MB"
+      }
+    }
+  },
+  "groups_nothingToSleep": {
+    "message": "Nothing in this group can sleep right now",
+    "description": "Toast when no tab in the group was eligible"
+  },
+  "groups_collapseLabel": {
+    "message": "Sleep a group when I collapse it",
+    "description": "Setting label"
+  },
+  "groups_collapseHint": {
+    "message": "Its tabs sleep right away; your usual protections (locked, pinned, playing…) still apply",
+    "description": "Setting hint"
+  },
+  "guard_typingLabel": {
+    "message": "Protect tabs while typing",
+    "description": "Settings toggle: don't put tabs with unsaved form input to sleep"
+  },
+  "guard_typingHint": {
+    "message": "Tabs with unsent text in a form or editor aren't put to sleep",
+    "description": "Settings hint under the typing toggle"
+  },
+  "guard_mediaLabel": {
+    "message": "Protect tabs in calls or screen sharing",
+    "description": "Settings toggle: don't put tabs using camera, microphone or screen capture to sleep"
+  },
+  "guard_mediaHint": {
+    "message": "Tabs using the camera, microphone or screen sharing stay awake",
+    "description": "Settings hint under the media toggle"
+  },
+  "reason_typing": {
+    "message": "Typing – protected",
+    "description": "Tab status pill: tab has unsaved input, so it won't be put to sleep"
+  },
+  "reason_media": {
+    "message": "In a call – protected",
+    "description": "Tab status pill: tab uses camera/microphone/screen capture, so it won't be put to sleep"
+  },
+  "idle_title": {
+    "message": "When I'm away",
+    "description": "Settings sub-heading for the lock/idle feature"
+  },
+  "idle_hint": {
+    "message": "The active tab in each window is never touched; locked, pinned and whitelisted tabs stay protected as usual",
+    "description": "Hint under the 'When I'm away' heading"
+  },
+  "idle_sleepOnLock": {
+    "message": "Sleep tabs when the computer is locked",
+    "description": "Toggle: sleep background tabs when the screen locks"
+  },
+  "idle_sleepOnIdle": {
+    "message": "Sleep tabs when I'm idle",
+    "description": "Toggle: sleep background tabs when there is no keyboard/mouse input"
+  },
+  "idle_sleepOnIdleHint": {
+    "message": "No keyboard or mouse activity for the time below",
+    "description": "Hint under the idle toggle"
+  },
+  "idle_idleAfter": {
+    "message": "Idle after",
+    "description": "Stepper label: minutes without input before counting as idle"
+  },
+  "idle_lastSweep": {
+    "message": "Last away sleep: $COUNT$ tab(s) · $SIZE$",
+    "description": "Small line showing the result of the last lock/idle sweep",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "size": {
+        "content": "$2"
+      }
+    }
+  },
+  "realgain_line": {
+    "message": "Measured real gain: last $LAST$ · total $TOTAL$",
+    "description": "Hero card line: real system RAM freed by the latest batch of sleeping tabs and in total",
+    "placeholders": {
+      "last": {
+        "content": "$1",
+        "example": "1.2 GB"
+      },
+      "total": {
+        "content": "$2",
+        "example": "8.4 GB"
+      }
+    }
+  },
+  "realgain_lineTotal": {
+    "message": "Measured real gain: total $TOTAL$",
+    "description": "Hero card line when only the all-time measured total is known",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "8.4 GB"
+      }
+    }
+  },
+  "realgain_title": {
+    "message": "Change in free system RAM measured a few seconds after tabs were put to sleep ($COUNT$ measurements). Other apps use memory at the same time, so this is approximate; implausible readings are ignored.",
+    "description": "Tooltip for the measured real gain line",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "realgain_toast": {
+    "message": "Real RAM freed: +$SIZE$",
+    "description": "Toast when a new real RAM measurement arrives",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "620 MB"
+      }
+    }
+  },
+  "realgain_reset": {
+    "message": "Reset measured total",
+    "description": "Settings button that resets the measured real RAM total"
+  },
+  "realgain_resetTitle": {
+    "message": "Reset the all-time total of real RAM measured after sleeping tabs",
+    "description": "Tooltip for the reset measured total button"
+  },
+  "realgain_resetDone": {
+    "message": "Measured total reset",
+    "description": "Toast after resetting the measured real RAM total"
   }
 }

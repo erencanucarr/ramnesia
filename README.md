@@ -29,6 +29,11 @@ Chrome's built-in Memory Saver decides on its own when to put tabs to sleep. Ram
 - You can put one tab to sleep right away, or all of them with "Sleep all". The active tab and locked tabs are skipped.
 - Tab search, and a list of sites that should never be put to sleep.
 - Pinned tabs and tabs playing audio are skipped by default. Both can be turned off.
+- Tabs where you have typed something you haven't sent yet are not put to sleep (on by default).
+- Tabs using the camera, microphone or screen sharing are not put to sleep (on by default).
+- Optionally, background tabs are put to sleep when the computer is locked or when you've been idle for a while (off by default).
+- Tab groups: put a whole group to sleep or lock it from the popup. Optionally, a group is put to sleep as soon as you collapse it (off by default).
+- Measured real gain: Ramnesia reads free system RAM just before and a few seconds after tabs are put to sleep, and shows the difference.
 - Optional desktop notification when tabs are put to sleep.
 - Light and dark theme. English and Turkish, following the browser language.
 
@@ -49,6 +54,7 @@ Chrome does not give extensions a tab's total memory use, so the numbers are app
 - Per-tab numbers are the page's JavaScript heap (`performance.memory`). The real memory use of a tab is higher, so the savings shown are usually lower than the real savings.
 - Tabs that can't be measured are counted as 50 MB and marked with `≈`.
 - System RAM is read with `chrome.system.memory`.
+- The measured real gain is the change in free system RAM a few seconds after tabs are put to sleep. Other programs and the operating system's cache affect it, so it is approximate; readings that look implausible are discarded.
 
 ## Permissions
 
@@ -57,9 +63,11 @@ Chrome does not give extensions a tab's total memory use, so the numbers are app
 | `tabs` | Listing tabs and putting them to sleep |
 | `alarms` | Checking for idle tabs every 30 seconds |
 | `storage` | Settings and statistics |
-| `scripting` and `<all_urls>` | Reading a page's JS heap size. Page content is not read. |
+| `scripting` and `<all_urls>` | Reading a page's JS heap size, and a small content script that notices unsent typing and camera, microphone or screen capture. What you type never leaves the page and is not stored; only whether a field has changed is reported. |
 | `system.memory` | Showing total and free system RAM |
 | `notifications` | The optional sleep notification |
+| `idle` | Noticing when the computer is locked or idle |
+| `tabGroups` | Sleeping and locking tab groups |
 
 No data leaves your device.
 
@@ -87,6 +95,11 @@ Chrome'un kendi Bellek Tasarrufu özelliği sekmeleri ne zaman uyutacağına ken
 - Tek bir sekmeyi hemen uyutabilir ya da "Hepsini uyut" ile hepsini uyutabilirsin. Açık sekme ve kilitli sekmeler atlanır.
 - Sekme arama ve hiç uyutulmayacak siteler listesi.
 - Sabitlenmiş sekmeler ve ses çalan sekmeler varsayılan olarak atlanır. İkisi de kapatılabilir.
+- Henüz göndermediğin bir yazı olan sekmeler uyutulmaz (varsayılan olarak açık).
+- Kamera, mikrofon veya ekran paylaşımı kullanan sekmeler uyutulmaz (varsayılan olarak açık).
+- İstersen bilgisayar kilitlenince ya da bir süre kullanılmayınca arka plandaki sekmeler uyutulur (varsayılan olarak kapalı).
+- Sekme grupları: bir grubun tamamını popup'tan uyutabilir veya kilitleyebilirsin. İstersen grup daraltılınca hemen uyutulur (varsayılan olarak kapalı).
+- Ölçülen gerçek kazanç: sekmeler uyutulmadan hemen önce ve birkaç saniye sonra sistemin boş RAM'i okunur, aradaki fark gösterilir.
 - Sekmeler uyutulunca isteğe bağlı masaüstü bildirimi.
 - Açık ve koyu tema. Tarayıcının diline göre İngilizce veya Türkçe.
 
@@ -99,7 +112,7 @@ Chrome'un kendi Bellek Tasarrufu özelliği sekmeleri ne zaman uyutacağına ken
 
 ### Bellek ölçümü
 
-Chrome eklentilere bir sekmenin toplam bellek kullanımını vermez, bu yüzden rakamlar yaklaşıktır. Sekme rakamları sayfanın JavaScript belleğidir (`performance.memory`). Sekmenin gerçek kullanımı bundan fazladır, yani gösterilen kazanç genelde gerçek kazançtan düşüktür. Ölçülemeyen sekmeler 50 MB sayılır ve önüne `≈` konur. Sistem RAM'i `chrome.system.memory` ile okunur. Hiçbir veri cihazından dışarı gönderilmez.
+Chrome eklentilere bir sekmenin toplam bellek kullanımını vermez, bu yüzden rakamlar yaklaşıktır. Sekme rakamları sayfanın JavaScript belleğidir (`performance.memory`). Sekmenin gerçek kullanımı bundan fazladır, yani gösterilen kazanç genelde gerçek kazançtan düşüktür. Ölçülemeyen sekmeler 50 MB sayılır ve önüne `≈` konur. Sistem RAM'i `chrome.system.memory` ile okunur. Ölçülen gerçek kazanç, sekmeler uyutulduktan birkaç saniye sonra boş RAM'deki değişimdir; diğer programlar ve işletim sisteminin önbelleği etkilediği için yaklaşıktır, mantıksız görünen ölçümler sayılmaz. Yazı koruması için yazdığın metin sayfadan dışarı çıkmaz ve saklanmaz; sadece bir alanın değişip değişmediği bildirilir. Hiçbir veri cihazından dışarı gönderilmez.
 
 ### Lisans
 

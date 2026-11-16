@@ -20,6 +20,20 @@ const NUM_LIMITS = {
 const $ = (id) => document.getElementById(id);
 const send = (msg) => chrome.runtime.sendMessage(msg);
 
+// --- özellik takılma noktaları ---------------------------------------------
+// features/*.popup.js dosyaları popup.js'ten sonra yüklenir ve buraya fonksiyon ekler.
+// Yer tutucular (popup.html): #heroExtra, #groupSection, #featureSettings
+const RNP = {
+  afterStats: [], // (statsResponse) => void   → her yenilemede
+  afterTabs: [],  // (tabsArray) => void        → her yenilemede
+  init: []        // () => void | Promise       → popup açılınca bir kez (ayarları yükle vb.)
+};
+function runPopupHooks(list, ...args) {
+  for (const h of list) {
+    try { h(...args); } catch (e) { console.warn("Ramnesia popup hook error", e); }
+  }
+}
+
 // --- yerelleştirme ---------------------------------------------------------
 
 const i18n = (key, ...subs) => chrome.i18n.getMessage(key, subs.map(String)) || key;
@@ -131,7 +145,7 @@ async function save(quiet) {
     whitelist: parseWhitelist()
   };
   await chrome.storage.sync.set(s);
-  current = s;
+  current = { ...current, ...s };
   applyPressureOpts(s.pressureMode);
   renderMode();
   if (!quiet) toast(i18n("settingsSaved"));
@@ -162,6 +176,7 @@ async function renderStats() {
     el.classList.add("bump");
   }
   lastSavedNow = r.savedNow;
+  runPopupHooks(RNP.afterStats, r);
 }
 
 // --- sistem belleği + aktif sekmeler ----------------------------------------
@@ -214,7 +229,8 @@ function statusParts(t) {
     audible: ["", i18n("reasonAudible")],
     whitelist: ["", i18n("reasonWhitelist")]
   };
-  if (t.reason) return [map[t.reason], ...mem];
+  // özelliklerin eklediği nedenler için çeviri anahtarı: "reason_<neden>" (ör. reason_typing)
+  if (t.reason) return [map[t.reason] || ["lock", i18n("reason_" + t.reason)], ...mem];
   const min = Math.ceil(t.remainingMs / 60000);
   const when = t.remainingMs <= 60000 ? ["soon", i18n("sleepSoon")] : ["", i18n("sleepInMinutes", min)];
   return [when, ...mem];
@@ -306,6 +322,7 @@ async function loadTabs() {
   tabs = r;
   renderAwake();
   renderTabs();
+  runPopupHooks(RNP.afterTabs, tabs);
 }
 
 const refresh = () => Promise.all([renderStats(), loadTabs()]);
@@ -356,5 +373,13 @@ $("discardNow").addEventListener("click", async () => {
   refresh();
 });
 
-loadSettings().then(refresh);
-setInterval(refresh, 5000); // kalan süreleri ve kazancı güncel tut
+// Özellik betikleri (features/*.popup.js) bu dosyadan sonra yüklendiği için
+// başlangıcı DOMContentLoaded'a bırakıyoruz; böylece kancaları hazır olur.
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadSettings();
+  for (const h of RNP.init) {
+    try { await h(); } catch (e) { console.warn("Ramnesia popup init error", e); }
+  }
+  refresh();
+  setInterval(refresh, 5000); // kalan süreleri ve kazancı güncel tut
+});

@@ -2,11 +2,22 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "short_name": "__MSG_extName__",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
-  "permissions": ["tabs", "alarms", "storage", "scripting", "notifications", "system.memory"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "tabs",
+    "alarms",
+    "storage",
+    "scripting",
+    "notifications",
+    "system.memory",
+    "idle",
+    "tabGroups"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -23,5 +34,30 @@
     "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "features/guard.main.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "features/guard.content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
 }

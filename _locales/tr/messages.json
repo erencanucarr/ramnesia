@@ -326,5 +326,203 @@
         "content": "$2"
       }
     }
+  },
+  "groups_title": {
+    "message": "Sekme grupları",
+    "description": "Header of the tab group section in the popup"
+  },
+  "groups_unnamed": {
+    "message": "Adsız grup",
+    "description": "Shown for a tab group without a title"
+  },
+  "groups_tabsOne": {
+    "message": "1 sekme",
+    "description": "Tab group sub-line: exactly one tab"
+  },
+  "groups_tabsMany": {
+    "message": "$COUNT$ sekme",
+    "description": "Tab group sub-line: number of tabs",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "groups_asleep": {
+    "message": "$COUNT$ uyuyor",
+    "description": "Tab group sub-line: number of sleeping tabs",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "groups_lockedPill": {
+    "message": "Kilitli",
+    "description": "Pill on a locked tab group"
+  },
+  "groups_sleepTitle": {
+    "message": "Bu grubu uyut",
+    "description": "Group sleep button tooltip"
+  },
+  "groups_lockTitle": {
+    "message": "Grubu kilitle (sekmeleri asla uyutma)",
+    "description": "Group lock button tooltip"
+  },
+  "groups_unlockTitle": {
+    "message": "Grubun kilidini aç (sekmeler uyutulabilir)",
+    "description": "Group unlock button tooltip"
+  },
+  "groups_lockedToast": {
+    "message": "Grup kilitlendi – sekmeleri uyutulmayacak",
+    "description": "Toast after locking a group"
+  },
+  "groups_unlockedToast": {
+    "message": "Grubun kilidi açıldı",
+    "description": "Toast after unlocking a group"
+  },
+  "groups_sleptToast": {
+    "message": "$COUNT$ sekme uyutuldu · $SIZE$ boşaldı",
+    "description": "Toast after putting a group to sleep",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "4"
+      },
+      "size": {
+        "content": "$2",
+        "example": "320 MB"
+      }
+    }
+  },
+  "groups_nothingToSleep": {
+    "message": "Bu grupta şu an uyutulabilecek sekme yok",
+    "description": "Toast when no tab in the group was eligible"
+  },
+  "groups_collapseLabel": {
+    "message": "Grubu daraltınca uyut",
+    "description": "Setting label"
+  },
+  "groups_collapseHint": {
+    "message": "Sekmeleri hemen uyutulur; olağan korumalar (kilitli, sabitlenmiş, ses çalan…) geçerli kalır",
+    "description": "Setting hint"
+  },
+  "guard_typingLabel": {
+    "message": "Yazı yazılan sekmeleri koru",
+    "description": "Settings toggle: don't put tabs with unsaved form input to sleep"
+  },
+  "guard_typingHint": {
+    "message": "Bir formda veya düzenleyicide gönderilmemiş yazı olan sekmeler uyutulmaz",
+    "description": "Settings hint under the typing toggle"
+  },
+  "guard_mediaLabel": {
+    "message": "Görüşme ve ekran paylaşımındaki sekmeleri koru",
+    "description": "Settings toggle: don't put tabs using camera, microphone or screen capture to sleep"
+  },
+  "guard_mediaHint": {
+    "message": "Kamera, mikrofon veya ekran paylaşımı kullanan sekmeler uyanık kalır",
+    "description": "Settings hint under the media toggle"
+  },
+  "reason_typing": {
+    "message": "Yazı yazılıyor – korunuyor",
+    "description": "Tab status pill: tab has unsaved input, so it won't be put to sleep"
+  },
+  "reason_media": {
+    "message": "Görüşmede – korunuyor",
+    "description": "Tab status pill: tab uses camera/microphone/screen capture, so it won't be put to sleep"
+  },
+  "idle_title": {
+    "message": "Uzaktayken",
+    "description": "Settings sub-heading for the lock/idle feature"
+  },
+  "idle_hint": {
+    "message": "Her penceredeki etkin sekmeye asla dokunulmaz; kilitli, sabitlenmiş ve beyaz listedeki sekmeler her zamanki gibi korunur",
+    "description": "Hint under the 'When I'm away' heading"
+  },
+  "idle_sleepOnLock": {
+    "message": "Bilgisayar kilitlenince sekmeleri uyut",
+    "description": "Toggle: sleep background tabs when the screen locks"
+  },
+  "idle_sleepOnIdle": {
+    "message": "Boşta kalınca sekmeleri uyut",
+    "description": "Toggle: sleep background tabs when there is no keyboard/mouse input"
+  },
+  "idle_sleepOnIdleHint": {
+    "message": "Aşağıdaki süre boyunca klavye ya da fare kullanılmazsa",
+    "description": "Hint under the idle toggle"
+  },
+  "idle_idleAfter": {
+    "message": "Boşta sayılma süresi",
+    "description": "Stepper label: minutes without input before counting as idle"
+  },
+  "idle_lastSweep": {
+    "message": "Son uzakta uyutma: $COUNT$ sekme · $SIZE$",
+    "description": "Small line showing the result of the last lock/idle sweep",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "size": {
+        "content": "$2"
+      }
+    }
+  },
+  "realgain_line": {
+    "message": "Ölçülen gerçek kazanç: son $LAST$ · toplam $TOTAL$",
+    "description": "Hero card line: real system RAM freed by the latest batch of sleeping tabs and in total",
+    "placeholders": {
+      "last": {
+        "content": "$1",
+        "example": "1,2 GB"
+      },
+      "total": {
+        "content": "$2",
+        "example": "8,4 GB"
+      }
+    }
+  },
+  "realgain_lineTotal": {
+    "message": "Ölçülen gerçek kazanç: toplam $TOTAL$",
+    "description": "Hero card line when only the all-time measured total is known",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "8,4 GB"
+      }
+    }
+  },
+  "realgain_title": {
+    "message": "Sekmeler uyutulduktan birkaç saniye sonra ölçülen boş sistem RAM'indeki değişim ($COUNT$ ölçüm). Diğer uygulamalar da aynı anda bellek kullandığından yaklaşıktır; makul olmayan ölçümler yok sayılır.",
+    "description": "Tooltip for the measured real gain line",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "realgain_toast": {
+    "message": "Gerçekte boşalan RAM: +$SIZE$",
+    "description": "Toast when a new real RAM measurement arrives",
+    "placeholders": {
+      "size": {
+        "content": "$1",
+        "example": "620 MB"
+      }
+    }
+  },
+  "realgain_reset": {
+    "message": "Ölçülen toplamı sıfırla",
+    "description": "Settings button that resets the measured real RAM total"
+  },
+  "realgain_resetTitle": {
+    "message": "Sekmeler uyutulduktan sonra ölçülen gerçek RAM toplamını sıfırla",
+    "description": "Tooltip for the reset measured total button"
+  },
+  "realgain_resetDone": {
+    "message": "Ölçülen toplam sıfırlandı",
+    "description": "Toast after resetting the measured real RAM total"
   }
 }

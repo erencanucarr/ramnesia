@@ -13,6 +13,40 @@ const DEFAULTS = {
   pressureMinutes: 1   // RAM yüksekken uyutma süresi (1–60 dk)
 };
 
+// --- özellik takılma noktaları ---------------------------------------------
+// features/*.js dosyaları bu dizilere fonksiyon ekler (en altta importScripts ile yüklenir).
+// Her özellik kendi varsayılan ayarlarını Object.assign(DEFAULTS, {...}) ile ekler.
+const RN = {
+  skipHooks: [],    // async (tab, settings) => "reasonKey" | null   → sekmeyi otomatik uyutma
+  beforeBatch: [],  // async ({ tabIds, source }) => void            → uyutmadan hemen önce
+  afterBatch: [],   // async ({ tabIds, count, bytes, source }) => void → uyutmadan hemen sonra
+  statsExtras: [],  // async () => object   → popup "stats" cevabına eklenir
+  tabExtras: [],    // async (tab) => object → popup "tabsInfo" her sekme kaydına eklenir
+  messages: {}      // { type: async (msg, sender) => result } → yeni mesaj türleri
+};
+
+async function runHooks(list, ...args) {
+  for (const h of list) {
+    try {
+      await h(...args);
+    } catch (e) {
+      console.warn("Ramnesia hook error", e);
+    }
+  }
+}
+
+async function extraSkipReason(tab, s) {
+  for (const h of RN.skipHooks) {
+    try {
+      const r = await h(tab, s);
+      if (r) return r;
+    } catch (e) {
+      console.warn("Ramnesia skip hook error", e);
+    }
+  }
+  return null;
+}
+
 const ALARM = "ramnesia-tick";
 const CHECK_EVERY_MIN = 0.5;                 // 30 sn'de bir kontrol
 const FALLBACK_BYTES = 50 * 1024 * 1024;     // ölçülemeyen sekme için tahmin
@@ -158,7 +192,28 @@ async function discardTab(tab) {
   return bytes;
 }
 
-async function sweep({ force = false } = {}) {
+// Bir grup sekmeyi uyutur; özelliklerin before/after kancalarını çalıştırır.
+// source: "auto" | "manual" | "all" | özelliklerin kendi adları (ör. "idle", "group")
+async function discardBatch(tabs, source) {
+  if (!tabs.length) return { count: 0, bytes: 0, tabIds: [] };
+  await runHooks(RN.beforeBatch, { tabIds: tabs.map((t) => t.id), source });
+  let count = 0;
+  let bytes = 0;
+  const tabIds = [];
+  for (const tab of tabs) {
+    const b = await discardTab(tab);
+    if (b != null) {
+      count++;
+      bytes += b;
+      tabIds.push(tab.id);
+    }
+  }
+  await runHooks(RN.afterBatch, { tabIds, count, bytes, source });
+  return { count, bytes, tabIds };
+}
+
+// force: süreyi beklemeden uyut. filter: ek sekme süzgeci (tab => bool). source: kancalar için etiket.
+async function sweep({ force = false, filter = null, source = force ? "all" : "auto" } = {}) {
   const s = await getSettings();
   if (!s.enabled && !force) return { count: 0, bytes: 0 };
 
@@ -166,8 +221,7 @@ async function sweep({ force = false } = {}) {
   const seen = await sget("seen", {});
   const now = Date.now();
   const { limitMs: limit } = await effectiveLimit(s);
-  let count = 0;
-  let bytes = 0;
+  const candidates = [];
 
   for (const tab of tabs) {
     if (tab.active) {
@@ -176,14 +230,12 @@ async function sweep({ force = false } = {}) {
     }
     if (seen[tab.id] == null) seen[tab.id] = tab.lastAccessed || now;
     const last = Math.max(seen[tab.id], tab.lastAccessed || 0);
-    if ((force || now - last >= limit) && canDiscard(tab, s)) {
-      const b = await discardTab(tab);
-      if (b != null) {
-        count++;
-        bytes += b;
-      }
+    if ((force || now - last >= limit) && canDiscard(tab, s) && (!filter || filter(tab))) {
+      if (!(await extraSkipReason(tab, s))) candidates.push(tab);
     }
   }
+
+  const { count, bytes } = await discardBatch(candidates, source);
 
   // Kapanmış sekmeleri temizle, uyanmış sekmelerin kazancını düş
   const alive = new Set(tabs.map((t) => String(t.id)));
@@ -314,7 +366,12 @@ async function tabsInfo() {
     tabs.map(async (t) => {
       const last = Math.max(seen[t.id] || 0, t.lastAccessed || 0) || now;
       const mem = t.discarded ? null : await measureTab(t.id);
+      const extras = {};
+      for (const h of RN.tabExtras) {
+        try { Object.assign(extras, await h(t)); } catch (e) { console.warn(e); }
+      }
       return {
+        ...extras,
         id: t.id,
         windowId: t.windowId,
         title: t.title || t.url,
@@ -323,7 +380,7 @@ async function tabsInfo() {
         active: t.active,
         discarded: !!t.discarded,
         locked: t.autoDiscardable === false,
-        reason: skipReason(t, s),
+        reason: skipReason(t, s) || (t.discarded ? null : await extraSkipReason(t, s)),
         memory: mem,
         saved: saved[t.id] || null,
         remainingMs: Math.max(0, limit - (now - last))
@@ -343,7 +400,12 @@ async function stats() {
     const m = await chrome.system.memory.getInfo();
     system = { capacity: m.capacity, available: m.availableCapacity };
   } catch {}
+  const extras = {};
+  for (const h of RN.statsExtras) {
+    try { Object.assign(extras, await h()); } catch (e) { console.warn(e); }
+  }
   return {
+    ...extras,
     system,
     total: tabs.filter((t) => isWeb(t.url)).length,
     discarded: tabs.filter((t) => t.discarded).length,
@@ -370,9 +432,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     case "discardOne":
       return reply(
         chrome.tabs.get(msg.tabId).then(async (t) => {
-          const b = await discardTab(t);
+          const r = await discardBatch([t], "manual");
           await updateBadge();
-          return { ok: b != null, bytes: b };
+          return { ok: r.count > 0, bytes: r.bytes };
         })
       );
     case "setLock":
@@ -383,11 +445,24 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     case "resetTotals":
       return reply(
         chrome.storage.local
-          .set({ totals: { bytes: 0, count: 0, since: Date.now() } })
+          .set({
+            totals: { bytes: 0, count: 0, since: Date.now() },
+            realTotals: { bytes: 0, batches: 0, since: Date.now() }
+          })
           .then(() => ({ ok: true }))
       );
+    default:
+      if (msg?.type && RN.messages[msg.type]) return reply(RN.messages[msg.type](msg, _sender));
   }
 });
 
 ensureAlarm();
 updateBadge();
+
+// Özellik modülleri (aynı global kapsamı paylaşır; yukarıdaki fonksiyonları kullanabilir)
+importScripts(
+  "features/guard.js",
+  "features/idle.js",
+  "features/groups.js",
+  "features/realgain.js"
+);
