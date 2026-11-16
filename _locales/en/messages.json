@@ -433,10 +433,6 @@
     "message": "In a call – protected",
     "description": "Tab status pill: tab uses camera/microphone/screen capture, so it won't be put to sleep"
   },
-  "idle_title": {
-    "message": "When I'm away",
-    "description": "Settings sub-heading for the lock/idle feature"
-  },
   "idle_hint": {
     "message": "The active tab in each window is never touched; locked, pinned and whitelisted tabs stay protected as usual",
     "description": "Hint under the 'When I'm away' heading"
@@ -513,16 +509,25 @@
       }
     }
   },
-  "realgain_reset": {
-    "message": "Reset measured total",
-    "description": "Settings button that resets the measured real RAM total"
+  "secGeneral": {
+    "message": "General"
   },
-  "realgain_resetTitle": {
-    "message": "Reset the all-time total of real RAM measured after sleeping tabs",
-    "description": "Tooltip for the reset measured total button"
+  "secProtect": {
+    "message": "Protection"
   },
-  "realgain_resetDone": {
-    "message": "Measured total reset",
-    "description": "Toast after resetting the measured real RAM total"
+  "secPressure": {
+    "message": "When RAM is high"
+  },
+  "secAway": {
+    "message": "When I'm away"
+  },
+  "secGroups": {
+    "message": "Tab groups"
+  },
+  "secStats": {
+    "message": "Statistics"
+  },
+  "back": {
+    "message": "Back"
   }
 }

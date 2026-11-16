@@ -41,20 +41,7 @@
     line.hidden = true;
     $("heroExtra").append(line);
 
-    const row = document.createElement("div");
-    row.className = "btn-row realgain-row";
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "ghost";
-    btn.textContent = i18n("realgain_reset");
-    btn.title = i18n("realgain_resetTitle");
-    btn.addEventListener("click", async () => {
-      const r = await send({ type: "realgainReset" });
-      toast(r?.ok ? i18n("realgain_resetDone") : i18n("changeFailed"));
-      refresh();
-    });
-    row.append(btn);
-    $("featureSettings").append(row);
+    // Ölçülen toplam, ayarlardaki "Toplamı sıfırla" ile birlikte sıfırlanır.
   });
 
   RNP.afterStats.push((r) => {

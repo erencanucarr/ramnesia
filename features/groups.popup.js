@@ -21,7 +21,7 @@
   // --- settings toggle -----------------------------------------------------------
 
   function buildSettings() {
-    const host = $("featureSettings");
+    const host = $("settingsGroups");
     if (!host) return;
     const row = document.createElement("label");
     row.className = "row";

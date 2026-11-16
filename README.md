@@ -13,7 +13,11 @@
 
 A Chrome extension that puts tabs you haven't used for a while to sleep, and shows how much memory that frees.
 
-<p align="center"><img src="docs/screenshot.png" width="380" alt="Ramnesia popup" /></p>
+<p align="center">
+  <img src="docs/screenshot.png" width="320" alt="Ramnesia popup" />
+  &nbsp;
+  <img src="docs/settings.png" width="320" alt="Ramnesia settings" />
+</p>
 
 ## What it does
 

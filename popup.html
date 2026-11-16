@@ -18,68 +18,81 @@
         <p id="modeText"></p>
       </div>
     </div>
-    <label class="switch" data-i18n-title="toggleTitle">
-      <input type="checkbox" id="enabled" />
-      <span></span>
-    </label>
+    <div class="header-actions">
+      <button id="openSettings" class="icon-btn" type="button" data-i18n-title="settings" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+      <label class="switch" data-i18n-title="toggleTitle">
+        <input type="checkbox" id="enabled" />
+        <span></span>
+      </label>
+    </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-top">
-      <div>
-        <div class="hero-label" data-i18n="systemMemory"></div>
-        <div class="hero-value"><span id="sysUsed">–</span><small id="sysCap"></small></div>
+  <!-- ana görünüm -->
+  <main id="mainView">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="hero-label" data-i18n="systemMemory"></div>
+          <div class="hero-value"><span id="sysUsed">–</span><small id="sysCap"></small></div>
+        </div>
+        <div class="hero-pct" id="sysPct"></div>
       </div>
-      <div class="hero-pct" id="sysPct"></div>
-    </div>
-    <div class="pressure-pill" id="pressurePill" hidden>
-      <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
-      <span data-i18n="pressurePill"></span>
-    </div>
-    <div class="meter" data-i18n-title="meterTitle">
-      <div id="meterOther"></div><div id="meterTabs"></div>
-    </div>
-    <div class="hero-meta">
-      <span id="sysFree"></span>
-      <span id="totalSaved"></span>
-    </div>
-    <div id="heroExtra"></div>
-  </section>
+      <div class="pressure-pill" id="pressurePill" hidden>
+        <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+        <span data-i18n="pressurePill"></span>
+      </div>
+      <div class="meter" data-i18n-title="meterTitle">
+        <div id="meterOther"></div><div id="meterTabs"></div>
+      </div>
+      <div class="hero-meta">
+        <span id="sysFree"></span>
+        <span id="totalSaved"></span>
+      </div>
+      <div id="heroExtra"></div>
+    </section>
 
-  <div class="tiles">
-    <div class="tile">
-      <div class="tile-label"><i class="dot awake"></i><span data-i18n="awakeTabs"></span></div>
-      <div class="tile-value" id="awakeMem">–</div>
-      <div class="tile-sub" id="awakeCount"></div>
+    <div class="tiles">
+      <div class="tile">
+        <div class="tile-label"><i class="dot awake"></i><span data-i18n="awakeTabs"></span></div>
+        <div class="tile-value" id="awakeMem">–</div>
+        <div class="tile-sub" id="awakeCount"></div>
+      </div>
+      <div class="tile">
+        <div class="tile-label"><i class="dot asleep"></i><span data-i18n="freedLabel"></span></div>
+        <div class="tile-value good" id="savedNow">0 MB</div>
+        <div class="tile-sub" id="sleepCount"></div>
+      </div>
     </div>
-    <div class="tile">
-      <div class="tile-label"><i class="dot asleep"></i><span data-i18n="freedLabel"></span></div>
-      <div class="tile-value good" id="savedNow">0 MB</div>
-      <div class="tile-sub" id="sleepCount"></div>
+    <p class="note" id="heroNote"></p>
+
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" data-i18n-placeholder="searchPlaceholder" />
+      </div>
+      <button id="discardNow" class="primary" data-i18n-title="discardAllTitle">
+        <svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        <span data-i18n="discardAll"></span>
+      </button>
     </div>
-  </div>
-  <p class="note" id="heroNote"></p>
 
-  <div class="toolbar">
-    <div class="search">
-      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="search" type="search" data-i18n-placeholder="searchPlaceholder" />
+    <div id="groupSection"></div>
+    <ul id="tabList"></ul>
+  </main>
+
+  <!-- ayarlar görünümü -->
+  <section id="settingsView" hidden>
+    <div class="view-head">
+      <button id="closeSettings" class="icon-btn" type="button" data-i18n-title="back">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <h2 data-i18n="settings"></h2>
     </div>
-    <button id="discardNow" class="primary" data-i18n-title="discardAllTitle">
-      <svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
-      <span data-i18n="discardAll"></span>
-    </button>
-  </div>
 
-  <div id="groupSection"></div>
-  <ul id="tabList"></ul>
-
-  <details id="settings">
-    <summary>
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-      <span data-i18n="settings"></span>
-    </summary>
-    <div class="settings-body">
+    <div class="set-card">
+      <h3 data-i18n="secGeneral"></h3>
       <label class="row">
         <span data-i18n="sleepAfter"></span>
         <span class="stepper">
@@ -92,7 +105,15 @@
       <label class="row"><span data-i18n="skipPinned"></span><input type="checkbox" id="skipPinned" class="toggle" /></label>
       <label class="row"><span data-i18n="skipAudible"></span><input type="checkbox" id="skipAudible" class="toggle" /></label>
       <label class="row"><span data-i18n="notifyLabel"></span><input type="checkbox" id="notify" class="toggle" /></label>
+    </div>
 
+    <div class="set-card">
+      <h3 data-i18n="secProtect"></h3>
+      <div id="settingsProtect"></div>
+    </div>
+
+    <div class="set-card">
+      <h3 data-i18n="secPressure"></h3>
       <label class="row">
         <span>
           <span data-i18n="pressureMode"></span>
@@ -120,17 +141,33 @@
           </span>
         </label>
       </div>
+    </div>
 
-      <div id="featureSettings"></div>
+    <div class="set-card">
+      <h3 data-i18n="secAway"></h3>
+      <div id="settingsAway"></div>
+    </div>
 
-      <div class="sub" data-i18n="whitelistTitle"></div>
+    <div class="set-card">
+      <h3 data-i18n="secGroups"></h3>
+      <div id="settingsGroups"></div>
+    </div>
+
+    <div class="set-card">
+      <h3 data-i18n="whitelistTitle"></h3>
       <textarea id="whitelist" rows="3" data-i18n-placeholder="whitelistPlaceholder"></textarea>
       <div class="btn-row">
         <button id="addCurrent" class="ghost" data-i18n="addCurrent"></button>
+      </div>
+    </div>
+
+    <div class="set-card">
+      <h3 data-i18n="secStats"></h3>
+      <div class="btn-row">
         <button id="resetTotals" class="ghost" data-i18n="resetTotals"></button>
       </div>
     </div>
-  </details>
+  </section>
 
   <div id="toast" role="status"></div>
 

@@ -433,10 +433,6 @@
     "message": "Görüşmede – korunuyor",
     "description": "Tab status pill: tab uses camera/microphone/screen capture, so it won't be put to sleep"
   },
-  "idle_title": {
-    "message": "Uzaktayken",
-    "description": "Settings sub-heading for the lock/idle feature"
-  },
   "idle_hint": {
     "message": "Her penceredeki etkin sekmeye asla dokunulmaz; kilitli, sabitlenmiş ve beyaz listedeki sekmeler her zamanki gibi korunur",
     "description": "Hint under the 'When I'm away' heading"
@@ -513,16 +509,25 @@
       }
     }
   },
-  "realgain_reset": {
-    "message": "Ölçülen toplamı sıfırla",
-    "description": "Settings button that resets the measured real RAM total"
+  "secGeneral": {
+    "message": "Genel"
   },
-  "realgain_resetTitle": {
-    "message": "Sekmeler uyutulduktan sonra ölçülen gerçek RAM toplamını sıfırla",
-    "description": "Tooltip for the reset measured total button"
+  "secProtect": {
+    "message": "Koruma"
   },
-  "realgain_resetDone": {
-    "message": "Ölçülen toplam sıfırlandı",
-    "description": "Toast after resetting the measured real RAM total"
+  "secPressure": {
+    "message": "RAM dolunca"
+  },
+  "secAway": {
+    "message": "Uzaktayken"
+  },
+  "secGroups": {
+    "message": "Sekme grupları"
+  },
+  "secStats": {
+    "message": "İstatistikler"
+  },
+  "back": {
+    "message": "Geri"
   }
 }

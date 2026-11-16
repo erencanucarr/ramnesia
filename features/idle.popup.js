@@ -36,7 +36,6 @@
   const section = el(
     "div",
     { id: "idleSettings", className: "idle-settings" },
-    el("div", { className: "sub", textContent: i18n("idle_title") }),
     el("small", { className: "hint", textContent: i18n("idle_hint") }),
     el("label", { className: "row" }, el("span", { textContent: i18n("idle_sleepOnLock") }), lockBox),
     el(
@@ -53,7 +52,7 @@
     opts,
     last
   );
-  $("featureSettings")?.append(section);
+  $("settingsAway")?.append(section);
 
   // --- ayarlar --------------------------------------------------------------
   const clampMin = (v) => {

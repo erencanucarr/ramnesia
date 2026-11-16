@@ -135,6 +135,24 @@ button.primary:hover { filter: brightness(1.08); }
 #tabList .empty { color: var(--muted); justify-content: center; padding: 18px; }
 
 /* ayarlar */
+/* başlık düğmeleri */
+.header-actions { display: flex; align-items: center; gap: 10px; }
+#openSettings svg { transition: transform .3s ease; }
+#openSettings.on svg { transform: rotate(60deg); }
+
+/* ayarlar görünümü */
+.view-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.view-head h2 { font-size: 15px; margin: 0; }
+.set-card { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px 6px; margin-bottom: 8px; }
+.set-card h3 {
+  margin: 2px 0 2px; font-size: 11.5px; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--muted);
+}
+.set-card:has(#settingsGroups:empty), .set-card:has(#settingsAway:empty), .set-card:has(#settingsProtect:empty) { display: none; }
+.set-card textarea { margin-top: 4px; }
+.set-card .btn-row { margin: 6px 0 4px; }
+[hidden] { display: none !important; }
+
 details { margin-top: 10px; border-top: 1px solid var(--line); }
 summary {
   display: flex; align-items: center; gap: 6px; padding: 10px 2px 4px; cursor: pointer;

@@ -22,7 +22,8 @@ const send = (msg) => chrome.runtime.sendMessage(msg);
 
 // --- özellik takılma noktaları ---------------------------------------------
 // features/*.popup.js dosyaları popup.js'ten sonra yüklenir ve buraya fonksiyon ekler.
-// Yer tutucular (popup.html): #heroExtra, #groupSection, #featureSettings
+// Yer tutucular (popup.html): #heroExtra, #groupSection ve ayarlar görünümündeki
+// #settingsProtect, #settingsAway, #settingsGroups
 const RNP = {
   afterStats: [], // (statsResponse) => void   → her yenilemede
   afterTabs: [],  // (tabsArray) => void        → her yenilemede
@@ -347,6 +348,24 @@ document.querySelectorAll("[data-step]").forEach((b) =>
   })
 );
 $("search").addEventListener("input", renderTabs);
+
+// --- görünüm geçişi (ana ekran ↔ ayarlar) -----------------------------------
+
+function showSettings(open) {
+  $("mainView").hidden = open;
+  $("settingsView").hidden = !open;
+  $("openSettings").classList.toggle("on", open);
+  $("openSettings").setAttribute("aria-pressed", String(open));
+  window.scrollTo(0, 0);
+}
+$("openSettings").addEventListener("click", () => showSettings($("settingsView").hidden));
+$("closeSettings").addEventListener("click", () => showSettings(false));
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("settingsView").hidden) {
+    e.preventDefault();
+    showSettings(false);
+  }
+});
 
 $("addCurrent").addEventListener("click", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });

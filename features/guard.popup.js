@@ -25,7 +25,7 @@
   }
 
   RNP.init.push(async () => {
-    const host = $("featureSettings");
+    const host = $("settingsProtect");
     if (!host) return;
     const s = await chrome.storage.sync.get(GUARD_DEFAULTS);
     const wrap = document.createElement("div");
