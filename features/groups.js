@@ -1,30 +1,10 @@
-// Ramnesia feature: tab groups (background). See RN hooks in background.js.
-//
-// 1) Sleep collapsed groups: collapsing a group puts its eligible tabs to sleep
-//    right away (setting sleepCollapsedGroups, off by default).
-// 2) Group lock: lock/unlock a whole group from the popup. Implemented with the
-//    same autoDiscardable:false flag as the per-tab lock, so Chrome's own Memory
-//    Saver also leaves those tabs alone.
-// 3) Sleep a group now (popup button).
-//
-// Group-lock bookkeeping lives in chrome.storage.session under "lockedGroups":
-//   { [groupId]: [tabId, ...] }
-// The key set = locked groups; the array = tabs whose lock was set BY the group
-// lock. Tabs the user had already locked individually are never listed, so
-// unlocking the group / leaving it never unlocks them. Group and tab ids are only
-// valid for one browser session, which matches storage.session's lifetime.
-
 Object.assign(DEFAULTS, {
-  sleepCollapsedGroups: false // collapse a tab group → put its tabs to sleep
+  sleepCollapsedGroups: false
 });
 
 const GROUP_NONE = chrome.tabGroups?.TAB_GROUP_ID_NONE ?? -1;
-const COLLAPSE_DELAY_MS = 400; // let Chrome move the active tab out of the group first
+const COLLAPSE_DELAY_MS = 400;
 
-// --- bookkeeping helpers ------------------------------------------------------
-
-// All read-modify-write of "lockedGroups" goes through this queue so concurrent
-// tab/group events can't overwrite each other's changes.
 let groupQueue = Promise.resolve();
 function withGroups(fn) {
   const run = groupQueue.then(async () => {
@@ -42,12 +22,10 @@ async function setAutoDiscardable(tabId, value) {
     await chrome.tabs.update(tabId, { autoDiscardable: value });
     return true;
   } catch {
-    return false; // tab closed meanwhile
+    return false;
   }
 }
 
-// Remove tabId from whichever locked group lists it (except keepGroup).
-// Returns the group id it was removed from, or null.
 function dropTabRecord(locked, tabId, keepGroup = null) {
   for (const [gid, ids] of Object.entries(locked)) {
     if (Number(gid) === keepGroup) continue;
@@ -60,7 +38,6 @@ function dropTabRecord(locked, tabId, keepGroup = null) {
   return null;
 }
 
-// A tab is now in groupId (GROUP_NONE if ungrouped). Apply / release the group lock.
 async function handleTabGroupChange(tab) {
   const tabId = tab.id;
   const groupId = tab.groupId ?? GROUP_NONE;
@@ -72,21 +49,16 @@ async function handleTabGroupChange(tab) {
     if (target) {
       if (alreadyListed) return;
       if (fromGroup != null) {
-        // moved between two locked groups: the lock is still the group's doing
         target.push(tabId);
       } else if (tab.autoDiscardable !== false) {
         if (await setAutoDiscardable(tabId, false)) target.push(tabId);
       }
-      // else: the user locked it individually → leave it alone, don't list it
     } else if (fromGroup != null) {
-      // left a locked group (to no group or an unlocked group) → release our lock
       await setAutoDiscardable(tabId, true);
     }
   });
 }
 
-// Group gone (closed, ungrouped or merged): release tabs it locked unless they
-// now sit in another locked group.
 async function releaseGroup(locked, groupId) {
   const ids = locked[groupId] || [];
   delete locked[groupId];
@@ -95,7 +67,7 @@ async function releaseGroup(locked, groupId) {
     try {
       tab = await chrome.tabs.get(tabId);
     } catch {
-      continue; // closed
+      continue;
     }
     const g = tab.groupId ?? GROUP_NONE;
     if (g !== GROUP_NONE && g !== groupId && locked[g]) {
@@ -113,7 +85,7 @@ async function lockGroup(groupId, lock) {
     if (lock) {
       const ids = locked[groupId] || [];
       for (const t of tabs) {
-        if (t.autoDiscardable === false) continue; // already locked (by user or by us)
+        if (t.autoDiscardable === false) continue;
         if (await setAutoDiscardable(t.id, false)) {
           if (!ids.includes(t.id)) ids.push(t.id);
           count++;
@@ -131,8 +103,6 @@ async function lockGroup(groupId, lock) {
   });
 }
 
-// Drop entries for groups that no longer exist (e.g. events missed while the
-// service worker was asleep in an unusual order).
 async function pruneLockedGroups(existingIds) {
   const locked = await sget("lockedGroups", {});
   const stale = Object.keys(locked).map(Number).filter((id) => !existingIds.has(id));
@@ -142,23 +112,21 @@ async function pruneLockedGroups(existingIds) {
   });
 }
 
-// --- events (registered synchronously at top level) --------------------------
-
 if (chrome.tabGroups) {
-  const lastCollapsed = new Map(); // groupId → collapsed (in memory only)
+  const lastCollapsed = new Map();
 
   chrome.tabGroups.onUpdated.addListener(async (group) => {
     const was = lastCollapsed.get(group.id);
     lastCollapsed.set(group.id, group.collapsed);
-    if (!group.collapsed || was === true) return; // only on the transition to collapsed
+    if (!group.collapsed || was === true) return;
     const s = await getSettings();
     if (!s.enabled || !s.sleepCollapsedGroups) return;
     await new Promise((r) => setTimeout(r, COLLAPSE_DELAY_MS));
     try {
       const g = await chrome.tabGroups.get(group.id);
-      if (!g.collapsed) return; // reopened already
+      if (!g.collapsed) return;
     } catch {
-      return; // group removed
+      return;
     }
     await sweep({ force: true, filter: (t) => t.groupId === group.id, source: "group" });
   });
@@ -175,8 +143,6 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (info.groupId !== undefined) {
     handleTabGroupChange(tab);
   } else if (info.autoDiscardable === true) {
-    // user (or someone) unlocked a group-locked tab individually: the group no
-    // longer holds its lock, so a later individual lock must survive leaving.
     withGroups(async (locked) => {
       dropTabRecord(locked, tabId);
     });
@@ -202,9 +168,6 @@ chrome.tabs.onReplaced.addListener((added, removed) => {
   });
 });
 
-// --- hooks ---------------------------------------------------------------------
-
-// tabsInfo calls this once per tab; share one storage read per popup refresh.
 let lockedGroupsCache = null;
 function lockedGroupsSnapshot() {
   if (!lockedGroupsCache) {
@@ -220,8 +183,6 @@ RN.tabExtras.push(async (tab) => {
   const locked = await lockedGroupsSnapshot();
   return { groupId: g, groupLocked: !!locked[g] };
 });
-
-// --- messages ----------------------------------------------------------------
 
 RN.messages.groupsInfo = async () => {
   if (!chrome.tabGroups) return [];
@@ -255,14 +216,12 @@ RN.messages.groupsInfo = async () => {
     }));
 };
 
-// { groupId, locked } → { ok, count }  (count = tabs whose lock flag changed)
 RN.messages.groupLock = async (msg) => {
   const groupId = Number(msg.groupId);
   if (!Number.isInteger(groupId) || groupId === GROUP_NONE) return { ok: false, count: 0 };
   return lockGroup(groupId, !!msg.locked);
 };
 
-// { groupId } → { count, bytes }
 RN.messages.groupSleep = async (msg) => {
   const groupId = Number(msg.groupId);
   if (!Number.isInteger(groupId) || groupId === GROUP_NONE) return { count: 0, bytes: 0 };

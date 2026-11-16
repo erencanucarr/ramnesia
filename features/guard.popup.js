@@ -1,4 +1,3 @@
-// Ramnesia feature: guard (popup). Ayarlar bölümüne iki anahtar ekler.
 (() => {
   const GUARD_DEFAULTS = { guardTyping: true, guardMedia: true };
   const ROWS = [

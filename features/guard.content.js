@@ -1,28 +1,23 @@
-// Ramnesia guard: isolated-world content script.
-// - Kaydedilmemiş kullanıcı girdisini (yazı) algılar.
-// - guard.main.js'ten (MAIN world) gelen görüşme/ekran paylaşımı durumunu alır.
-// Durum değişince arka plana { type: "guardState", typing, media } gönderir.
 (() => {
   const NS = "__ramnesiaGuardIsolated";
   const MSG = "__ramnesiaGuard";
 
-  // Aynı dünyada geçerli bir kopya zaten çalışıyorsa çık; bağlamı kopmuş eski kopyayı durdur.
   const prev = globalThis[NS];
   try {
     if (prev && prev.alive()) return;
     if (prev) prev.stop();
   } catch {}
 
-  const EVAL_DELAY = 400;   // yazma durunca değerlendir (debounce)
-  const RECHECK_MS = 5000;  // kirli alan varken programatik temizlemeyi/silinmeyi yakala
+  const EVAL_DELAY = 400;
+  const RECHECK_MS = 5000;
   const TEXT_TYPES = new Set(["text", "email", "url", "tel", "number", "password"]);
 
-  const baseline = new WeakMap(); // alan -> odaklanınca/ilk görülünce değeri
+  const baseline = new WeakMap();
   const dirty = new Set();
   const pending = new Set();
   const bound = [];
   let media = false;
-  let sent = "false|false"; // arka plana son bildirilen durum (başlangıç = temiz)
+  let sent = "false|false";
   let evalTimer = 0;
   let recheckTimer = 0;
   let dead = false;
@@ -51,8 +46,6 @@
     try { chrome.runtime.onMessage.removeListener(onRuntimeMessage); } catch {}
   }
 
-  // --- alan tespiti ----------------------------------------------------------
-
   const realTarget = (e) => {
     try {
       return (e.composedPath && e.composedPath()[0]) || e.target;
@@ -66,7 +59,7 @@
     if (!node || node.nodeType !== 1) return null;
     const tag = node.localName;
     if (tag === "textarea" || tag === "select") return node;
-    if (tag === "input") return TEXT_TYPES.has(node.type) ? node : null; // type=search hariç
+    if (tag === "input") return TEXT_TYPES.has(node.type) ? node : null;
     if (node.isContentEditable) {
       let host = node;
       while (host.parentElement && host.parentElement.isContentEditable) host = host.parentElement;
@@ -75,7 +68,6 @@
     return null;
   }
 
-  // Arama kutuları "kaydedilmemiş yazı" sayılmaz.
   function ignored(el) {
     try {
       if ((el.getAttribute("role") || "").toLowerCase() === "searchbox") return true;
@@ -101,7 +93,7 @@
         .join("");
     }
     if (el.localName === "input" || el.localName === "textarea") return el.defaultValue;
-    return ""; // contenteditable: başlangıç bilinmiyorsa boş say
+    return "";
   }
 
   const blank = (v) => /^[\s​-‍﻿]*$/.test(v);
@@ -113,8 +105,6 @@
     const base = baseline.has(el) ? baseline.get(el) : defaultOf(el);
     return v !== base;
   }
-
-  // --- değerlendirme ve bildirim ----------------------------------------------
 
   function evaluate() {
     evalTimer = 0;
@@ -145,11 +135,11 @@
       if (p && typeof p.catch === "function")
         p.catch(() => {
           if (!alive()) stop();
-          else sent = null; // bir sonraki değerlendirmede tekrar dene
+          else sent = null;
         });
       return true;
     } catch {
-      stop(); // "Extension context invalidated"
+      stop();
       return false;
     }
   }
@@ -163,8 +153,6 @@
     sent = key;
     send(typing, media);
   }
-
-  // --- olaylar --------------------------------------------------------------
 
   on(window, "focusin", (e) => {
     const el = fieldOf(realTarget(e));
@@ -184,7 +172,6 @@
     scheduleEval();
   });
 
-  // Gönderilen formdaki alanlar artık "kaydedildi" sayılır.
   function settleForm(form) {
     if (!form || typeof form.contains !== "function") return;
     for (const el of [...dirty, ...pending]) {
@@ -206,10 +193,9 @@
   on(window, "submit", (e) => settleForm(realTarget(e)));
   on(window, "reset", (e) => {
     const form = realTarget(e);
-    setTimeout(() => settleForm(form), 0); // değerler sıfırlandıktan sonra
+    setTimeout(() => settleForm(form), 0);
   });
 
-  // Sayfa gizlenince (gezinme/bfcache) arka plandaki durumu temizle; geri gelince yeniden bildir.
   on(window, "pagehide", () => {
     if (dead || !alive()) return;
     if (sent !== "false|false") send(false, false);
@@ -219,7 +205,6 @@
     if (e.persisted) report(true);
   });
 
-  // MAIN world'den gelen görüşme durumu
   on(window, "message", (e) => {
     if (e.source !== window) return;
     const d = e.data;
@@ -230,7 +215,6 @@
     }
   });
 
-  // Arka plan gezinmeden sonra durumu yeniden ister.
   function onRuntimeMessage(msg) {
     if (msg && msg.type === "guardPing") report(true);
   }
@@ -240,7 +224,6 @@
     return;
   }
 
-  // Sonradan enjekte edildiysek (eklenti kurulumu/güncellemesi) mevcut doldurulmuş alanları tara.
   if (document.readyState !== "loading") {
     try {
       for (const el of document.querySelectorAll("textarea, input")) {

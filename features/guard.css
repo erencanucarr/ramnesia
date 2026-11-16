@@ -1,4 +1,1 @@
-/* Ramnesia feature: guard (popup styles)
-   Ayar satırları mevcut .row / .toggle / .hint sınıflarını kullanır; "reason_typing" ve
-   "reason_media" durumları popup.js'te varsayılan "pill lock" olarak çizilir. */
 .guard-settings { display: contents; }

@@ -1,5 +1,3 @@
-/* Ramnesia feature: groups (popup styles) */
-
 #groupSection { margin: 2px 0 6px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 #groupSection[hidden], #groupSection:empty { display: none; }
 
@@ -12,7 +10,6 @@
   font-size: 10.5px; letter-spacing: 0; font-variant-numeric: tabular-nums;
 }
 
-/* rows mirror #tabList rows, a bit tighter */
 .rn-groups { list-style: none; margin: 0; padding: 0; max-height: 132px; overflow-y: auto; }
 .rn-groups li { display: flex; align-items: center; gap: 10px; padding: 5px 6px; border-radius: 9px; }
 .rn-groups li:hover { background: var(--hover); }
@@ -22,6 +19,5 @@
 .rn-groups li.sleeping .title { color: var(--muted); }
 .rn-groups .status { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 11.5px; margin-top: 1px; }
 
-/* 10px dot centred in the same 18px column as the tab favicons */
 .rn-group-dot { width: 10px; height: 10px; flex: none; margin: 0 4px; border-radius: 50%; }
 .rn-groups li.sleeping .rn-group-dot { opacity: .5; }

@@ -1,6 +1,3 @@
-// Ramnesia feature: calibrate (popup). See RNP hooks in popup.js.
-// Shows the calibration status (real RAM / JS heap factor learned from realgain
-// measurements) in the Statistics card of the settings view, with a reset button.
 (() => {
   let row = null;
   let hint = null;

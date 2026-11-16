@@ -1,16 +1,3 @@
-// Ramnesia feature: right-click menu (background).
-//
-// Chrome lets extensions add items to the page's right-click menu and to the menu of the
-// extension's toolbar icon, but not to the tab strip. Both menus act on the active tab.
-//
-//   Bu sekmeyi uyut            → switches to the previously used tab, then sleeps this one
-//                                (Chrome can't discard the tab you're looking at)
-//   Diğer sekmeleri uyut       → sleeps the other tabs in this window (normal protections apply)
-//   ☐ Bu sekmeyi kilitle       → autoDiscardable on/off (same as the lock in the popup)
-//   ☐ Bu siteyi hiç uyutma     → adds/removes the site in the whitelist
-//   Bu sitenin uyutma süresi ▸ → ◉ Varsayılan / 2 / 5 / 10 / 15 / 30 dk / 1 saat (siteRules)
-//
-// Checkbox and radio states follow the active tab (tab switch, navigation, settings change).
 (() => {
   const CONTEXTS = ["page", "action"];
   const SITE_CHOICES = [2, 5, 10, 15, 30, 60];
@@ -45,8 +32,6 @@
     await syncMenus();
   }
 
-  // Geri çağırma biçimi: eski Chrome sürümlerinde update bir söz (promise) döndürmez;
-  // menü henüz yoksa oluşan hata da sessizce yutulur.
   const update = (id, props) =>
     new Promise((r) => chrome.contextMenus.update(id, props, () => { void chrome.runtime.lastError; r(); }));
 
@@ -59,7 +44,6 @@
     }
   }
 
-  // Menüdeki işaretleri o anki sekmeye göre ayarla.
   async function syncMenus(tab) {
     tab = tab || (await activeTab());
     const s = await getSettings();
@@ -86,16 +70,11 @@
         }),
         ...SITE_CHOICES.map((m) => update(ID.siteMin(m), { checked: rule?.minutes === m }))
       ]);
-    } catch {
-      // menü henüz oluşturulmamış olabilir (ilk kurulum sırasında)
-    }
+    } catch {}
   }
-
-  // --- işlemler ----------------------------------------------------------------
 
   async function sleepThisTab(tab) {
     if (!tab || !isWeb(tab.url)) return;
-    // Açık sekme uyutulamaz: önce aynı penceredeki en son kullanılan diğer sekmeye geç.
     const others = (await chrome.tabs.query({ windowId: tab.windowId })).filter((t) => t.id !== tab.id);
     if (!others.length) return;
     others.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
@@ -125,7 +104,6 @@
     const s = await getSettings();
     let list = (s.whitelist || []).filter((d) => {
       d = String(d).trim().toLowerCase().replace(/^www\./, "");
-      // kapatırken bu sekmeyi kapsayan bütün girişleri kaldır (ör. "google.com" → mail.google.com)
       return never ? true : !(host === d || host.endsWith("." + d));
     });
     if (never && !isWhitelisted(tab.url, list)) list = [...list, host];
@@ -136,7 +114,6 @@
     const host = tab && isWeb(tab.url) ? hostOf(tab.url) : "";
     if (!host) return;
     const s = await getSettings();
-    // Bu sekmeye uyan kural varsa onu güncelle (ör. "google.com"), yoksa yeni kural ekle.
     const current = siteRuleFor(tab.url, s.siteRules);
     const key = current?.host || host;
     let rules = (s.siteRules || []).filter(
@@ -175,8 +152,6 @@
     }
     syncMenus();
   });
-
-  // --- menüyü güncel tut -------------------------------------------------------
 
   chrome.runtime.onInstalled.addListener(() => createMenus());
   chrome.runtime.onStartup.addListener(() => createMenus());

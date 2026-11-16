@@ -1,6 +1,3 @@
-// Ramnesia feature: idle (popup). See RNP hooks in popup.js.
-// Ayarlar bölümüne "Uzaktayken" alt başlığı, iki anahtar ve dakika ayarı ekler.
-
 (() => {
   const IDLE_DEFAULTS = { sleepOnLock: false, sleepOnIdle: false, idleMinutes: 10 };
   const IDLE_MIN = 1;
@@ -12,13 +9,12 @@
     return n;
   };
 
-  // --- arayüz ---------------------------------------------------------------
   const lockBox = el("input", { type: "checkbox", id: "idleSleepOnLock", className: "toggle" });
   const idleBox = el("input", { type: "checkbox", id: "idleSleepOnIdle", className: "toggle" });
   const minInput = el("input", { type: "number", id: "idleMinutes", min: IDLE_MIN, max: IDLE_MAX, step: 1 });
   const minus = el("button", { type: "button", textContent: "−" });
   const plus = el("button", { type: "button", textContent: "+" });
-  minus.dataset.idleStep = "-1"; // data-step değil: popup.js'in bağlamasına takılmasın
+  minus.dataset.idleStep = "-1";
   plus.dataset.idleStep = "1";
 
   const opts = el(
@@ -54,7 +50,6 @@
   );
   $("settingsAway")?.append(section);
 
-  // --- ayarlar --------------------------------------------------------------
   const clampMin = (v) => {
     const n = parseInt(v, 10);
     return Number.isFinite(n) ? Math.min(IDLE_MAX, Math.max(IDLE_MIN, n)) : IDLE_DEFAULTS.idleMinutes;
@@ -95,7 +90,6 @@
       if (minInput.disabled) return;
       const dir = Number(b.dataset.idleStep);
       const v = clampMin(minInput.value);
-      // 10 dk altında 1'er, üstünde 5'er adım
       const step = v < 10 || (v === 10 && dir < 0) ? 1 : 5;
       minInput.value = clampMin(v + dir * step);
       save(true);
@@ -104,7 +98,6 @@
 
   RNP.init.push(load);
 
-  // --- son uzakta-uyutma ----------------------------------------------------
   RNP.afterStats.push((r) => {
     const x = r?.idleLast;
     if (!x || !x.count) {

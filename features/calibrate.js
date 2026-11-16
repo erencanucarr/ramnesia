@@ -1,25 +1,11 @@
-// Ramnesia feature: calibrate (background). See RN hooks in background.js.
-//
-// A tab's number is normally its JS heap (performance.memory), which underestimates the
-// RAM its renderer really uses. features/realgain.js measures the real RAM freed by each
-// batch of discards; every reliable measurement it stores (session `realLast`, with the
-// real `bytes` and the raw JS-heap sum `heapBytes`) is one sample of real / heap.
-// The calibration factor is the median of the last few ratios (in log space), and once
-// enough samples exist it turns heap numbers into calibrated per-tab estimates.
-//
-// Storage:
-//   chrome.storage.local calibration = { factor, samples, updatedAt, ratios, lastAt }
-//     factor   current estimate (1–10)        samples  accepted measurements in total
-//     ratios   last WINDOW accepted ratios     lastAt   realLast.at already counted
-// "Reset total" (core resetTotals) leaves it alone; RN.messages.calibrationReset clears it.
 (() => {
   const KEY = "calibration";
-  const MIN_HEAP = 20 * 1024 * 1024; // smaller batches are too noisy to learn from
-  const RATIO_MIN = 0.5; // aynı süreci paylaşan sekmeler gerçekten düşük oran verebilir; sadece son çarpan [1,10] ile sınırlanır
+  const MIN_HEAP = 20 * 1024 * 1024;
+  const RATIO_MIN = 0.5;
   const RATIO_MAX = 15;
   const FACTOR_MIN = 1;
   const FACTOR_MAX = 10;
-  const WINDOW = 20;                 // median of the last N ratios
+  const WINDOW = 20;
   const READY_AT = 3;
 
   const empty = () => ({ factor: 1, samples: 0, updatedAt: null, ratios: [], lastAt: 0 });
@@ -40,7 +26,6 @@
     };
   }
 
-  // Median in log space (= geometric mean of the two middle values for an even count).
   function medianFactor(ratios) {
     const logs = ratios.map(Math.log).sort((a, b) => a - b);
     const n = logs.length;
@@ -50,7 +35,6 @@
     return clamp(Math.exp(ln), FACTOR_MIN, FACTOR_MAX);
   }
 
-  // In-memory cache so the memory provider stays cheap.
   let cache = null;
   let loading = null;
   async function load() {
@@ -65,20 +49,17 @@
     return loading;
   }
 
-  // Serialises read-modify-writes (samples and resets).
   let chain = Promise.resolve();
   const queue = (fn) =>
     (chain = chain.then(fn).catch((e) => console.warn("Ramnesia calibrate store error", e)));
 
-  // One realgain measurement → maybe one calibration sample.
   function addSample(m) {
     return queue(async () => {
       const real = Number(m?.bytes);
       const heap = Number(m?.heapBytes);
       const at = Number(m?.at) || 0;
       const c = normalize((await chrome.storage.local.get(KEY))[KEY]);
-      if (at && at <= c.lastAt) return; // already counted
-      // Batches containing tabs whose heap couldn't be measured would skew real/heap.
+      if (at && at <= c.lastAt) return;
       if (Number(m?.unmeasured) > 0) return;
       if (!(heap >= MIN_HEAP) || !(real > 0)) return;
       const r = real / heap;
@@ -116,7 +97,6 @@
 
   RN.messages.calibrationReset = async () => {
     await queue(async () => {
-      // Keep lastAt so the current realLast is not counted again after the reset.
       const prev = normalize((await chrome.storage.local.get(KEY))[KEY]);
       cache = { ...empty(), lastAt: prev.lastAt };
       await chrome.storage.local.set({ [KEY]: cache });

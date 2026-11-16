@@ -1,29 +1,12 @@
-// Ramnesia feature: realgain (background). See RN hooks in background.js.
-//
-// Measures the *real* system RAM freed by a batch of discards: free system memory
-// (chrome.system.memory availableCapacity) is read right before the batch and sampled
-// again a few seconds after it, once the discarded renderer processes have exited.
-// The biggest increase over the "before" value ≈ RAM actually given back to the OS.
-//
-// Storage:
-//   chrome.storage.local   realTotals = { bytes, batches, since }  (reliable measurements only)
-//   chrome.storage.session realLast   = { at, bytes, count, heapBytes, estimateBytes, source }
-//
-// heapBytes / estimateBytes are the *raw* JS-heap sum of the discarded tabs (never the
-// displayed, possibly calibrated value): features/calibrate.js learns real/heap from
-// these, so using calibrated numbers here would make the calibration compound.
 (() => {
-  const SAMPLE_AT_MS = [1500, 3000, 5000];        // after the batch; total wait < 8 s
-  const MERGE_WINDOW_MS = 12000;                  // a batch starting this soon joins the running measurement
-  const STALL_MS = 8000;                          // give up on a paused measurement after this
-  const PLAUSIBLE_EXTRA = 2 * 1024 * 1024 * 1024; // 2 GB slack on top of 8 × estimate
+  const SAMPLE_AT_MS = [1500, 3000, 5000];
+  const MERGE_WINDOW_MS = 12000;
+  const STALL_MS = 8000;
+  const PLAUSIBLE_EXTRA = 2 * 1024 * 1024 * 1024;
   const PLAUSIBLE_FACTOR = 8;
 
-  // Batches between their beforeBatch and afterBatch (normally at most one).
   const pending = [];
-  // The measurement currently sampling (at most one).
   let active = null;
-  // Serialises storage read-modify-writes.
   let writeChain = Promise.resolve();
   const queueWrite = (fn) =>
     (writeChain = writeChain.then(fn).catch((e) => console.warn("Ramnesia realgain store error", e)));
@@ -51,7 +34,6 @@
     if (avail != null) m.maxDelta = Math.max(m.maxDelta, avail - m.before);
   }
 
-  // Ends a measurement (idempotent). `avail` = an optional last reading to include.
   function finish(m, avail) {
     if (m.done) return;
     m.done = true;
@@ -59,8 +41,7 @@
     observe(m, avail);
     if (active === m) active = null;
 
-    const delta = Math.max(0, m.maxDelta); // OS reuse / other apps can make it negative
-    // Ölçülemeyen sekmeler tavana 50 MB tahminle eklenir (bkz. FALLBACK_BYTES).
+    const delta = Math.max(0, m.maxDelta);
     const ceiling = PLAUSIBLE_FACTOR * (m.estimateBytes + m.unmeasured * FALLBACK_BYTES) + PLAUSIBLE_EXTRA;
     if (m.overlap || delta <= 0 || delta > ceiling) {
       console.debug("Ramnesia realgain: unreliable measurement skipped", {
@@ -73,8 +54,8 @@
       bytes: delta,
       count: m.count,
       heapBytes: m.estimateBytes,
-      estimateBytes: m.estimateBytes, // kept for compatibility; same raw heap sum
-      unmeasured: m.unmeasured, // tabs whose heap could not be read; calibration skips these
+      estimateBytes: m.estimateBytes,
+      unmeasured: m.unmeasured,
       source: m.sources.size === 1 ? [...m.sources][0] : "mixed"
     };
     queueWrite(async () => {
@@ -86,8 +67,6 @@
     });
   }
 
-  // Samples at 1.5 s / 3 s / 5 s; not awaited by anyone, so callers are never delayed.
-  // The service worker stays alive well past the last sample (< 8 s, MV3 idle limit is 30 s).
   function schedule(m) {
     clearTimers(m);
     SAMPLE_AT_MS.forEach((ms, idx) => {
@@ -103,8 +82,6 @@
   }
 
   RN.beforeBatch.push(async ({ tabIds, source }) => {
-    // Interleaved batches (B starts before A's discards finished): their freed memory
-    // can't be told apart, so every batch involved is marked as not measurable.
     const overlap = pending.length > 0;
     pending.forEach((p) => {
       p.overlap = true;
@@ -115,22 +92,18 @@
 
     const m = active;
     if (m && !m.done && Date.now() - m.startedAt < MERGE_WINDOW_MS) {
-      // The previous batch is still sampling and its renderers may still be exiting.
-      // Taking a fresh baseline now would credit that tail to this batch, so this batch
-      // joins the running measurement (same "before" value) and sampling restarts after it.
       entry.merge = m;
       m.holds++;
       clearTimers(m);
-      m.timers.push(setTimeout(() => finish(m), STALL_MS)); // in case afterBatch never comes
+      m.timers.push(setTimeout(() => finish(m), STALL_MS));
       return;
     }
     const avail = await availNow();
-    if (m) finish(m, avail); // older than the merge window: end it here
+    if (m) finish(m, avail);
     entry.before = avail;
   });
 
   RN.afterBatch.push(async ({ tabIds, count, heapBytes, unmeasured, source }) => {
-    // Matching before-entry: the latest one with this source containing these tabs.
     let i = -1;
     for (let k = pending.length - 1; k >= 0; k--) {
       const p = pending[k];
@@ -144,7 +117,7 @@
 
     if (entry.merge) {
       const m = entry.merge;
-      if (m.done) return; // stalled and already finished
+      if (m.done) return;
       m.holds--;
       if (entry.overlap) m.overlap = true;
       if (count) {
@@ -158,12 +131,12 @@
     }
 
     if (!count || entry.before == null) return;
-    if (active) finish(active); // safety; normally ended in beforeBatch
+    if (active) finish(active);
     const m = {
       before: entry.before,
       overlap: entry.overlap,
       count,
-      estimateBytes: heapBytes || 0, // raw JS heap, see header
+      estimateBytes: heapBytes || 0,
       unmeasured: unmeasured || 0,
       sources: new Set([source]),
       startedAt: Date.now(),

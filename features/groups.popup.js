@@ -1,8 +1,4 @@
-// Ramnesia feature: tab groups (popup). See RNP hooks in popup.js.
-// Renders #groupSection (one compact row per tab group) and a settings toggle.
-
 (() => {
-  // Chrome's tabGroups.Color names → close to the colors Chrome draws
   const GROUP_COLORS = {
     grey: "#5f6368",
     blue: "#1a73e8",
@@ -16,9 +12,7 @@
   };
 
   const GROUP_SETTING_DEFAULTS = { sleepCollapsedGroups: false };
-  let groupsBusy = false; // ignore refresh re-renders while an action is running
-
-  // --- settings toggle -----------------------------------------------------------
+  let groupsBusy = false;
 
   function buildSettings() {
     const host = $("settingsGroups");
@@ -55,8 +49,6 @@
     const input = $("sleepCollapsedGroups");
     if (input) input.checked = !!s.sleepCollapsedGroups;
   });
-
-  // --- group list ------------------------------------------------------------------
 
   function subLine(g) {
     const parts = [g.tabCount === 1 ? i18n("groups_tabsOne") : i18n("groups_tabsMany", g.tabCount)];
@@ -128,7 +120,7 @@
       toast(i18n("changeFailed"));
     } finally {
       groupsBusy = false;
-      refresh(); // re-renders tabs, then groups via afterTabs
+      refresh();
     }
   }
 

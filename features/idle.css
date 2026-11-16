@@ -1,4 +1,3 @@
-/* Ramnesia feature: idle (popup styles) */
 .idle-settings > .sub + .hint { margin-bottom: 2px; }
 .idle-settings .idle-last { margin-top: 2px; opacity: .85; font-variant-numeric: tabular-nums; }
 .idle-settings .idle-last[hidden] { display: none; }

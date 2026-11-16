@@ -1,42 +1,29 @@
-// Ramnesia – belirli süre girilmeyen sekmeleri chrome.tabs.discard ile uyutur
-// ve uyutulan sekmelerin ne kadar bellek boşalttığını takip eder.
-
 const DEFAULTS = {
   enabled: true,
-  minutes: 5,          // kaç dakika girilmeyince uyutulsun
-  skipPinned: true,    // sabitlenmiş sekmelere dokunma
-  skipAudible: true,   // ses çalan sekmelere dokunma
-  notify: false,       // uyutunca masaüstü bildirimi göster
-  whitelist: [],       // hiç uyutulmayacak alan adları (ör. "youtube.com")
-  siteRules: [],       // siteye özel süre: [{ host: "mail.google.com", minutes: 30 }]
-  pressureMode: false, // RAM yüksekken boşta sekmeleri daha erken uyut
-  pressureThreshold: 85, // % kullanılan RAM (50–95)
-  pressureMinutes: 1   // RAM yüksekken uyutma süresi (1–60 dk)
+  minutes: 5,
+  skipPinned: true,
+  skipAudible: true,
+  notify: false,
+  whitelist: [],
+  siteRules: [],
+  pressureMode: false,
+  pressureThreshold: 85,
+  pressureMinutes: 1
 };
 
-// --- özellik takılma noktaları ---------------------------------------------
-// features/*.js dosyaları bu dizilere fonksiyon ekler (en altta importScripts ile yüklenir).
-// Her özellik kendi varsayılan ayarlarını Object.assign(DEFAULTS, {...}) ile ekler.
 const RN = {
-  skipHooks: [],    // async (tab, settings) => "reasonKey" | null   → sekmeyi otomatik uyutma
-  beforeBatch: [],  // async ({ tabIds, source }) => void            → uyutmadan hemen önce
-  afterBatch: [],   // async ({ tabIds, count, bytes, source }) => void → uyutmadan hemen sonra
-  statsExtras: [],  // async () => object   → popup "stats" cevabına eklenir
-  tabExtras: [],    // async (tab) => object → popup "tabsInfo" her sekme kaydına eklenir
-  messages: {},     // { type: async (msg, sender) => result } → yeni mesaj türleri
-  // Sekme belleği kaynakları: { priority, fn: async (tab, heapBytes) => { bytes, kind } | null }
-  // Küçük priority önce denenir; ilk dolu sonuç kullanılır. kind: "exact" | "calibrated".
-  // Hiçbiri sonuç vermezse ham JS belleği kullanılır (kind: "heap").
+  skipHooks: [],
+  beforeBatch: [],
+  afterBatch: [],
+  statsExtras: [],
+  tabExtras: [],
+  messages: {},
   memoryProviders: []
 };
 
-// Bir sekmenin bellek değeri: { bytes, kind, heap } | null
-// heap: ham JS belleği (performance.memory) — kalibrasyon için hep ayrıca taşınır.
-// cachedOnly: sayfaya hiç dokunma, önbellekteki (eski olsa da) değeri kullan.
 async function tabMemory(tab, { cachedOnly = false } = {}) {
   const heap = await measureTab(tab.id, {
     maxAgeMs: tab.active ? MEM_TTL_ACTIVE_MS : MEM_TTL_BG_MS,
-    // Donmuş sekmeye betik eklemek onu uyandırır (ya da zaman aşımına kadar bekletir).
     cachedOnly: cachedOnly || !!tab.frozen
   });
   const providers = [...RN.memoryProviders].sort((a, b) => a.priority - b.priority);
@@ -74,19 +61,14 @@ async function extraSkipReason(tab, s) {
 }
 
 const ALARM = "ramnesia-tick";
-const CHECK_EVERY_MIN = 0.5;                 // 30 sn'de bir kontrol
-const FALLBACK_BYTES = 50 * 1024 * 1024;     // ölçülemeyen sekme için tahmin
-// Bellek ölçümü maliyeti: her ölçüm sekmeye betik ekler (arka plandaki sekmeyi de çalıştırır).
-const MEM_TTL_ACTIVE_MS = 15 * 1000;   // açık sekmenin değeri bu kadar eskiyince yeniden ölç
-const MEM_TTL_BG_MS = 2 * 60 * 1000;   // arka plandaki sekmenin belleği yavaş değişir
-const MEASURE_CONCURRENCY = 6;         // aynı anda en fazla bu kadar sekmeye betik ekle
+const CHECK_EVERY_MIN = 0.5;
+const FALLBACK_BYTES = 50 * 1024 * 1024;
+const MEM_TTL_ACTIVE_MS = 15 * 1000;
+const MEM_TTL_BG_MS = 2 * 60 * 1000;
+const MEASURE_CONCURRENCY = 6;
 const MEASURE_TIMEOUT_MS = 800;
-const MEM_PERSIST_DELAY_MS = 2000;     // önbelleği depoya en fazla bu aralıkla bir kez yaz
-const TABSINFO_BUDGET_MS = 300;        // popup listesi için ölçüm bekleme süresi
-
-// --- depolama yardımcıları -------------------------------------------------
-// session: tarayıcı kapanınca silinir (sekme kimlikleri zaten değişir)
-// local:   kalıcı toplam istatistikler
+const MEM_PERSIST_DELAY_MS = 2000;
+const TABSINFO_BUDGET_MS = 300;
 
 const clampInt = (v, min, max, def) => {
   const n = parseInt(v, 10);
@@ -99,8 +81,6 @@ async function getSettings() {
   s.pressureMinutes = clampInt(s.pressureMinutes, 1, 60, DEFAULTS.pressureMinutes);
   return s;
 }
-
-// --- yerelleştirme ---------------------------------------------------------
 
 const i18n = (key, ...subs) => chrome.i18n.getMessage(key, subs.map(String)) || key;
 const DECIMAL_SEP = /^tr\b/i.test(chrome.i18n.getUILanguage()) ? "," : ".";
@@ -155,18 +135,9 @@ function fmtBytes(b) {
   return Math.round(mb) + " MB";
 }
 
-// --- bellek ölçümü ---------------------------------------------------------
-// Sekmenin JS belleğini (performance.memory) okur. Bu, sekmenin toplam RAM'inin
-// bir alt sınırıdır; gerçek kazanç genelde daha yüksektir.
-
-// Önbellek bellekte tek bir nesnede tutulur; paralel ölçümler aynı nesneyi güncellediği
-// için birbirinin kaydını silmez. Oturum deposuna da yazılır (worker yeniden başlarsa diye).
-// Yükleme sözü (promise) saklanır: soğuk başlangıçta aynı anda gelen çağrılar da
-// aynı nesneyi alır.
 let memCacheP = null;
 const getMemCache = () => (memCacheP ??= sget("memCache", {}));
 
-// Önbellek yazımı birleştirilir: 200 ölçüm = 200 tam yazma değil, birkaç saniyede bir yazma.
 let memPersistTimer = null;
 function persistMemCache() {
   if (memPersistTimer) return;
@@ -178,7 +149,6 @@ function persistMemCache() {
   }, MEM_PERSIST_DELAY_MS);
 }
 
-// Eşzamanlılık sınırı: aynı anda en fazla MEASURE_CONCURRENCY ölçüm.
 let measuring = 0;
 const measureWaiters = [];
 async function acquireMeasureSlot() {
@@ -190,8 +160,8 @@ function releaseMeasureSlot() {
   measureWaiters.shift()?.();
 }
 
-const measureInflight = new Map(); // tabId → Promise (aynı sekme için ikinci betik eklenmez)
-const measureFailedAt = new Map(); // ölçülemeyen sekmeler (PDF, kısıtlı sayfa…) her yenilemede tekrar denenmesin
+const measureInflight = new Map();
+const measureFailedAt = new Map();
 
 async function measureTab(tabId, { maxAgeMs = MEM_TTL_BG_MS, cachedOnly = false } = {}) {
   const cache = await getMemCache();
@@ -210,7 +180,7 @@ async function measureTab(tabId, { maxAgeMs = MEM_TTL_BG_MS, cachedOnly = false 
         injectImmediately: true,
         func: () => (performance.memory ? performance.memory.usedJSHeapSize : null)
       });
-      run.catch(() => null); // zaman aşımından sonra gelen hata "Uncaught (in promise)" olmasın
+      run.catch(() => null);
       const timeout = new Promise((r) => setTimeout(() => r(null), MEASURE_TIMEOUT_MS));
       const res = await Promise.race([run, timeout]);
       const bytes = res?.[0]?.result ?? null;
@@ -221,7 +191,7 @@ async function measureTab(tabId, { maxAgeMs = MEM_TTL_BG_MS, cachedOnly = false 
       } else {
         measureFailedAt.set(tabId, Date.now());
       }
-      return bytes ?? c?.bytes ?? null; // ölçülemezse eski değer (varsa)
+      return bytes ?? c?.bytes ?? null;
     } catch {
       return c?.bytes ?? null;
     } finally {
@@ -232,9 +202,6 @@ async function measureTab(tabId, { maxAgeMs = MEM_TTL_BG_MS, cachedOnly = false 
   measureInflight.set(tabId, p);
   return p;
 }
-
-// --- RAM baskısı ----------------------------------------------------------
-// Sistem RAM kullanımı eşiği aşınca (ve mod açıksa) daha kısa süre uygulanır.
 
 async function memUsedPct() {
   try {
@@ -253,10 +220,6 @@ async function effectiveLimit(s) {
   return { pressureActive, minutes, limitMs: minutes * 60 * 1000 };
 }
 
-// --- siteye özel süre ------------------------------------------------------
-// Kural, alan adına ve alt alan adlarına uyar; birden çok kural uyarsa en uzun (en özel)
-// alan adı kazanır. RAM baskısı etkinse yine en fazla pressureMinutes beklenir.
-
 function siteRuleFor(url, rules) {
   const host = hostOf(url);
   if (!host || !Array.isArray(rules)) return null;
@@ -272,7 +235,6 @@ function siteRuleFor(url, rules) {
   return best;
 }
 
-// eff: effectiveLimit(s) sonucu
 function limitMsForTab(tab, s, eff) {
   const rule = siteRuleFor(tab.url, s.siteRules);
   if (!rule) return eff.limitMs;
@@ -280,17 +242,12 @@ function limitMsForTab(tab, s, eff) {
   return minutes * 60 * 1000;
 }
 
-// --- uyutma ----------------------------------------------------------------
-
-// Şu an bu eklentinin uyutmakta olduğu sekmeler: onUpdated'deki "Chrome uyuttu" yolu
-// bunlara dokunmamalı, yoksa buradaki kaydın üstüne yazabilir.
 const discardingIds = new Set();
 
-// Döner: { bytes, heap } | null. bytes = gösterilen kazanç, heap = ham JS belleği (ölçülemediyse null).
 async function discardTab(tab) {
   const m = await tabMemory(tab);
   const bytes = m?.bytes ?? FALLBACK_BYTES;
-  const heap = m?.heap ?? null; // null = ölçülemedi (50 MB tahmini sadece gösterim için)
+  const heap = m?.heap ?? null;
   let res;
   discardingIds.add(tab.id);
   try {
@@ -315,15 +272,13 @@ async function discardTab(tab) {
   }
 }
 
-// Bir grup sekmeyi uyutur; özelliklerin before/after kancalarını çalıştırır.
-// source: "auto" | "manual" | "all" | özelliklerin kendi adları (ör. "idle", "group")
 async function discardBatch(tabs, source) {
   if (!tabs.length) return { count: 0, bytes: 0, heapBytes: 0, unmeasured: 0, tabIds: [] };
   await runHooks(RN.beforeBatch, { tabIds: tabs.map((t) => t.id), source });
   let count = 0;
-  let bytes = 0;     // gösterilen kazanç (exact/calibrated/heap karışık olabilir)
-  let heapBytes = 0; // ölçülen sekmelerin ham JS belleği toplamı — kalibrasyon bununla yapılmalı
-  let unmeasured = 0; // JS belleği ölçülemeyen (50 MB tahmin edilen) sekme sayısı
+  let bytes = 0;
+  let heapBytes = 0;
+  let unmeasured = 0;
   const tabIds = [];
   for (const tab of tabs) {
     const r = await discardTab(tab);
@@ -339,7 +294,6 @@ async function discardBatch(tabs, source) {
   return { count, bytes, heapBytes, unmeasured, tabIds };
 }
 
-// force: süreyi beklemeden uyut. filter: ek sekme süzgeci (tab => bool). source: kancalar için etiket.
 async function sweep({ force = false, filter = null, source = force ? "all" : "auto" } = {}) {
   const s = await getSettings();
   if (!s.enabled && !force) return { count: 0, bytes: 0 };
@@ -364,8 +318,6 @@ async function sweep({ force = false, filter = null, source = force ? "all" : "a
 
   const { count, bytes } = await discardBatch(candidates, source);
 
-  // Kapanmış sekmeleri temizle, uyanmış sekmelerin kazancını düş.
-  // Sekmeler uyutmadan SONRA yeniden sorgulanır; yoksa az önce uyutulanların kaydı silinir.
   const after = await chrome.tabs.query({});
   const alive = new Set(after.map((t) => String(t.id)));
   const sleeping = new Set(after.filter((t) => t.discarded).map((t) => String(t.id)));
@@ -387,8 +339,6 @@ async function sweep({ force = false, filter = null, source = force ? "all" : "a
   return { count, bytes };
 }
 
-// --- rozet (eklenti simgesindeki küçük yazı) --------------------------------
-
 async function updateBadge() {
   const saved = await sget("saved", {});
   const total = Object.values(saved).reduce((a, x) => a + x.bytes, 0);
@@ -401,8 +351,6 @@ async function updateBadge() {
   await chrome.action.setBadgeBackgroundColor({ color: "#16a34a" });
   if (chrome.action.setBadgeTextColor) await chrome.action.setBadgeTextColor({ color: "#ffffff" });
 }
-
-// --- olaylar ---------------------------------------------------------------
 
 function ensureAlarm() {
   chrome.alarms.get(ALARM, (a) => {
@@ -425,7 +373,7 @@ chrome.tabs.onActivated.addListener(async ({ tabId, windowId }) => {
   const seen = await sget("seen", {});
   const activeByWindow = await sget("activeByWindow", {});
   const prev = activeByWindow[windowId];
-  if (prev != null && prev !== tabId) seen[prev] = now; // bırakılan sekmenin sayacı şimdi başlar
+  if (prev != null && prev !== tabId) seen[prev] = now;
   seen[tabId] = now;
   activeByWindow[windowId] = tabId;
   await sset({ seen, activeByWindow });
@@ -433,7 +381,6 @@ chrome.tabs.onActivated.addListener(async ({ tabId, windowId }) => {
 
 chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
   if (info.discarded === false) {
-    // sekme uyandı → artık o bellek kullanılıyor
     const saved = await sget("saved", {});
     if (saved[tabId]) {
       delete saved[tabId];
@@ -441,8 +388,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
       updateBadge();
     }
   } else if (info.discarded === true && !discardingIds.has(tabId)) {
-    // Chrome'un kendisi uyuttuysa ve önceden ölçmüşsek onu da göster
-    // (bu eklentinin uyuttuğu sekmeler discardingIds'tedir; onları discardTab kaydeder)
     const saved = await sget("saved", {});
     if (!saved[tabId]) {
       const cache = await getMemCache();
@@ -460,7 +405,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
   }
 });
 
-// Bazı Chrome sürümlerinde uyutulan sekmenin kimliği değişebilir
 chrome.tabs.onReplaced.addListener(async (added, removed) => {
   const seen = await sget("seen", {});
   const saved = await sget("saved", {});
@@ -483,8 +427,6 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
   updateBadge();
 });
 
-// --- popup mesajları -------------------------------------------------------
-
 async function tabsInfo() {
   const s = await getSettings();
   const seen = await sget("seen", {});
@@ -493,8 +435,6 @@ async function tabsInfo() {
   const now = Date.now();
   const eff = await effectiveLimit(s);
 
-  // Popup ölçümleri beklemesin: süre bütçesi dolunca önbellekteki değerle cevap verilir;
-  // başlamış ölçümler arka planda biter ve bir sonraki yenilemede (5 sn) görünür.
   const budget = new Promise((r) => setTimeout(r, TABSINFO_BUDGET_MS));
 
   return Promise.all(
@@ -518,9 +458,9 @@ async function tabsInfo() {
         discarded: !!t.discarded,
         locked: t.autoDiscardable === false,
         reason: skipReason(t, s) || (t.discarded ? null : await extraSkipReason(t, s)),
-        memory: m?.bytes ?? null,        // gösterilecek değer
-        memoryKind: m?.kind ?? null,     // "exact" | "calibrated" | "heap" | null
-        heap: m?.heap ?? null,           // ham JS belleği
+        memory: m?.bytes ?? null,
+        memoryKind: m?.kind ?? null,
+        heap: m?.heap ?? null,
         saved: saved[t.id] || null,
         remainingMs: Math.max(0, limitMsForTab(t, s, eff) - (now - last)),
         siteMinutes: siteRuleFor(t.url, s.siteRules)?.minutes ?? null
@@ -578,7 +518,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         })
       );
     case "setLock":
-      // autoDiscardable:false hem bu eklentiyi hem Chrome'un kendi Bellek Tasarrufu'nu durdurur
       return reply(
         chrome.tabs.update(msg.tabId, { autoDiscardable: !msg.locked }).then(() => ({ ok: true }))
       );
@@ -599,7 +538,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 ensureAlarm();
 updateBadge();
 
-// Özellik modülleri (aynı global kapsamı paylaşır; yukarıdaki fonksiyonları kullanabilir)
 importScripts(
   "features/guard.js",
   "features/idle.js",

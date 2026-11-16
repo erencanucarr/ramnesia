@@ -1,8 +1,3 @@
-// Ramnesia feature: processes (popup). See RNP hooks in popup.js.
-// Only on browsers with chrome.processes (Chrome Dev/Canary): adds a row to the "General"
-// settings card showing whether exact per-tab memory is on, with a button to grant (or
-// drop) the optional "processes" permission. permissions.request needs a user gesture,
-// which is why it lives here and not in the background. Elsewhere it renders nothing.
 (() => {
   const PERM = { permissions: ["processes"] };
   let row = null;
@@ -56,7 +51,6 @@
     btn.disabled = true;
     try {
       if (!granted) {
-        // Must run straight from the click (user gesture).
         const ok = await chrome.permissions.request(PERM);
         toast(i18n(ok ? "processes_enabledToast" : "processes_deniedToast"));
       } else {
@@ -75,7 +69,6 @@
     refresh();
   }
 
-  // Beklenmez (await yok): ilk açılışta yoklama yavaş olabilir, popup'ın ilk yenilemesini bekletmesin.
   RNP.init.push(() => {
     send({ type: "processesStatus" })
       .then((st) => { if (st && !st.error) render(st); })

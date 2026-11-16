@@ -29,7 +29,6 @@
     </div>
   </header>
 
-  <!-- ana görünüm -->
   <main id="mainView">
     <section class="hero">
       <div class="hero-top">
@@ -85,7 +84,6 @@
     <ul id="tabList"></ul>
   </main>
 
-  <!-- ayarlar görünümü -->
   <section id="settingsView" hidden>
     <div class="view-head">
       <button id="closeSettings" class="icon-btn" type="button" data-i18n-title="back">
@@ -189,7 +187,12 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="popup.js"></script>
+  <script src="popup/core.js"></script>
+  <script src="popup/settings.js"></script>
+  <script src="popup/stats.js"></script>
+  <script src="popup/tabs.js"></script>
+  <script src="popup/siteRules.js"></script>
+  <script src="popup/main.js"></script>
   <script src="features/guard.popup.js"></script>
   <script src="features/idle.popup.js"></script>
   <script src="features/groups.popup.js"></script>

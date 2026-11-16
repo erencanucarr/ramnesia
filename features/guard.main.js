@@ -1,15 +1,9 @@
-// Ramnesia guard: MAIN-world content script (page context).
-// getUserMedia / getDisplayMedia ile alınan akışların izlerini (track) takip eder;
-// "live" iz varken sayfa görüşmede/ekran paylaşımında sayılır. Durum, isolated
-// dünyadaki guard.content.js'e window.postMessage ile bildirilir.
-// Savunmacı yazıldı: sarmalama başarısız olursa sayfanın orijinal API'si aynen kalır.
 (() => {
   const W = window;
   const KEY = Symbol.for("ramnesia.guard.main");
   const MSG = "__ramnesiaGuard";
 
   try {
-    // Zaten kurulu (ör. eklenti güncellemesinden sonra yeniden enjekte edildi): sadece durumu duyur.
     if (typeof W[KEY] === "function") {
       W[KEY]();
       return;
@@ -27,7 +21,7 @@
     return;
   }
 
-  const POLL_MS = 3000; // track.stop() "ended" olayı tetiklemez, bu yüzden hafifçe yokla
+  const POLL_MS = 3000;
   const tracks = new Set();
   let live = false;
   let timer = 0;
@@ -72,7 +66,6 @@
     } catch {}
   }
 
-  // proto[name] fonksiyonunu, özelliklerini koruyarak sarmalar.
   function wrap(proto, name, make) {
     try {
       const d = proto && Object.getOwnPropertyDescriptor(proto, name);
@@ -87,7 +80,6 @@
     } catch {}
   }
 
-  // Promise döndüren API'ler: aynı promise'i sayfaya geri ver, yan dalda izle.
   const viaPromise = (orig) =>
     function (...args) {
       const p = Reflect.apply(orig, this, args);
@@ -97,7 +89,6 @@
       return p;
     };
 
-  // Eski geri çağırımlı API: navigator.webkitGetUserMedia(constraints, success, error)
   const viaCallback = (orig) =>
     function (constraints, ok, err, ...rest) {
       const ok2 =
@@ -110,7 +101,6 @@
       return Reflect.apply(orig, this, [constraints, ok2, err, ...rest]);
     };
 
-  // Klonlanan izler/akışlar da aynı cihazı açık tutar.
   const viaClone = (orig, tracked) =>
     function (...args) {
       const r = Reflect.apply(orig, this, args);
@@ -130,7 +120,6 @@
       wrap(W.MediaStream.prototype, "clone", (o) => viaClone(o, (s) => s.getTracks().some((t) => tracks.has(t))));
   } catch {}
 
-  // isolated betik yüklenince durumu sorar
   try {
     W.addEventListener("message", (e) => {
       try {

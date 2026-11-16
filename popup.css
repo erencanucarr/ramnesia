@@ -43,14 +43,12 @@ body {
 svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 button { font: inherit; cursor: pointer; }
 
-/* başlık */
 header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand img { width: 32px; height: 32px; border-radius: 8px; }
 h1 { font-size: 15px; margin: 0; }
 .brand p { margin: 0; color: var(--muted); font-size: 11.5px; }
 
-/* özet kartı */
 .hero {
   border-radius: 14px; padding: 14px 16px; color: #fff;
   background: linear-gradient(135deg, var(--hero-a), var(--hero-b));
@@ -98,7 +96,6 @@ h1 { font-size: 15px; margin: 0; }
 .bump { animation: bump .5s ease; }
 @keyframes bump { 40% { transform: scale(1.06); } }
 
-/* araç çubuğu */
 .toolbar { display: flex; gap: 8px; margin: 12px 0 6px; }
 .search {
   flex: 1; display: flex; align-items: center; gap: 6px; padding: 0 10px;
@@ -111,7 +108,6 @@ button.primary {
 }
 button.primary:hover { filter: brightness(1.08); }
 
-/* sekme listesi */
 #tabList { list-style: none; margin: 0; padding: 0; max-height: 270px; overflow-y: auto; }
 #tabList li { display: flex; align-items: center; gap: 10px; padding: 7px 6px; border-radius: 9px; }
 #tabList li:hover { background: var(--hover); }
@@ -139,13 +135,10 @@ button.primary:hover { filter: brightness(1.08); }
 .icon-btn.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 #tabList .empty { color: var(--muted); justify-content: center; padding: 18px; }
 
-/* ayarlar */
-/* başlık düğmeleri */
 .header-actions { display: flex; align-items: center; gap: 10px; }
 #openSettings svg { transition: transform .3s ease; }
 #openSettings.on svg { transform: rotate(60deg); }
 
-/* ayarlar görünümü */
 .view-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .view-head h2 { font-size: 15px; margin: 0; }
 .set-card { border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px 6px; margin-bottom: 8px; }
@@ -194,7 +187,6 @@ button.ghost {
 }
 button.ghost:hover { border-color: var(--accent); }
 
-/* anahtarlar */
 .toggle {
   appearance: none; width: 32px; height: 18px; border-radius: 18px; background: var(--line);
   position: relative; cursor: pointer; transition: .2s; margin: 0;
@@ -216,7 +208,6 @@ button.ghost:hover { border-color: var(--accent); }
 .switch input:checked + span { background: var(--good); }
 .switch input:checked + span::before { transform: translateX(16px); }
 
-/* bildirim baloncuğu */
 #toast {
   position: fixed; left: 50%; bottom: 14px; transform: translate(-50%, 20px);
   background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 10px;
@@ -224,7 +215,6 @@ button.ghost:hover { border-color: var(--accent); }
 }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-/* siteye özel süreler */
 .site-rules { list-style: none; margin: 6px 0 4px; padding: 0; }
 .site-rules li { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
 .site-rules li.empty { display: block; padding: 2px 0 4px; }

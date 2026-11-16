@@ -1,10 +1,7 @@
-// Ramnesia feature: realgain (popup). See RNP hooks in popup.js.
-// Shows the measured real RAM gain (change in free system memory after a batch of
-// discards) inside the hero card, toasts new measurements, and adds a reset button.
 (() => {
   let line = null;
   let state = { realLast: null, realTotals: null };
-  let seenAt = null; // realLast.at already shown; null = not initialised yet
+  let seenAt = null;
 
   function render() {
     if (!line) return;
@@ -40,8 +37,6 @@
     line.className = "realgain-line";
     line.hidden = true;
     $("heroExtra").append(line);
-
-    // Ölçülen toplam, ayarlardaki "Toplamı sıfırla" ile birlikte sıfırlanır.
   });
 
   RNP.afterStats.push((r) => {
@@ -49,8 +44,6 @@
     update({ realLast: r.realLast || null, realTotals: r.realTotals || null });
   });
 
-  // A measurement finishes a few seconds after the discard: react right away instead
-  // of waiting for the popup's 5 s refresh.
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "session" && changes.realLast) update({ realLast: changes.realLast.newValue || null });
     if (area === "local" && changes.realTotals) update({ realTotals: changes.realTotals.newValue || null });

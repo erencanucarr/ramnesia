@@ -1,26 +1,19 @@
-// Ramnesia feature: guard (background).
-// Yazı yazılan (kaydedilmemiş girdi) veya görüşme/ekran paylaşımı yapılan sekmeleri korur.
-// Durum içerik betiklerinden "guardState" mesajıyla gelir; sekme + çerçeve bazında
-// chrome.storage.session'da tutulur ve sekme düzeyinde birleştirilir (herhangi bir çerçeve = sekme).
-
 Object.assign(DEFAULTS, {
-  guardTyping: true, // yazı yazılan sekmeleri uyutma
-  guardMedia: true   // kamera/mikrofon/ekran paylaşımı açık sekmeleri uyutma
+  guardTyping: true,
+  guardMedia: true
 });
 
 (() => {
-  const KEY = "guard"; // session: { [tabId]: { [frameId]: { typing, media, doc } } }
+  const KEY = "guard";
   const SCRIPTS = { main: "features/guard.main.js", isolated: "features/guard.content.js" };
 
-  let mirrorP = null;              // storage.session'ın bellek kopyası (SW yeniden başlayınca tekrar okunur)
-  let queue = Promise.resolve();   // okuma-değiştirme-yazma işlemlerini sıraya koyar
+  let mirrorP = null;
+  let queue = Promise.resolve();
 
-  // Söz (promise) saklanır: soğuk başlangıçta aynı anda gelen çağrılar aynı nesneyi alır.
   function load() {
     return (mirrorP ??= sget(KEY, {}));
   }
 
-  // fn(all) true dönerse değişiklik kaydedilir.
   function mutate(fn) {
     const run = queue.then(async () => {
       const all = await load();
@@ -52,8 +45,6 @@ Object.assign(DEFAULTS, {
 
   const ping = (tabId) => chrome.tabs.sendMessage(tabId, { type: "guardPing" }).catch(() => {});
 
-  // --- içerik betiklerinden gelen durum --------------------------------------
-
   RN.messages.guardState = async (msg, sender) => {
     const tabId = sender?.tab?.id;
     if (sender?.id !== chrome.runtime.id || tabId == null || tabId < 0) return { ok: false };
@@ -69,7 +60,6 @@ Object.assign(DEFAULTS, {
         frames[frameId] = { typing, media, doc };
       } else {
         if (!cur) return false;
-        // aynı çerçevede yeni belge yüklendiyse eski belgenin geç gelen "temiz" mesajını yok say
         if (cur.doc && doc && cur.doc !== doc) return false;
         delete frames[frameId];
       }
@@ -79,8 +69,6 @@ Object.assign(DEFAULTS, {
     });
     return { ok: true };
   };
-
-  // --- temizlik -------------------------------------------------------------
 
   chrome.tabs.onRemoved.addListener((tabId) => {
     clearTab(tabId);
@@ -94,13 +82,10 @@ Object.assign(DEFAULTS, {
     if (info.discarded === true) {
       clearTab(tabId);
     } else if (info.status === "loading" && info.url) {
-      // Üst çerçevede URL değişti: eski durumu sil. SPA gezinmesinde (belge aynı kalır)
-      // içerik betikleri hâlâ çalıştığı için durumlarını yeniden bildirmelerini iste.
       clearTab(tabId).then(() => ping(tabId));
     }
   });
 
-  // Servis çalışanı her başladığında artık olmayan sekmelerin kayıtlarını at.
   chrome.tabs
     .query({})
     .then((tabs) => {
@@ -118,8 +103,6 @@ Object.assign(DEFAULTS, {
     })
     .catch(() => {});
 
-  // --- uyutma kancaları ------------------------------------------------------
-
   RN.skipHooks.push(async (tab, s) => {
     if (!s.guardTyping && !s.guardMedia) return null;
     const st = await tabState(tab.id);
@@ -129,9 +112,6 @@ Object.assign(DEFAULTS, {
   });
 
   RN.tabExtras.push(async (tab) => ({ guard: await tabState(tab.id) }));
-
-  // --- kurulum/güncelleme: açık sekmelere betikleri enjekte et ------------------
-  // Manifestteki content_scripts yalnızca bundan sonra yüklenen sayfalara girer.
 
   chrome.runtime.onInstalled.addListener(async ({ reason }) => {
     if (reason !== "install" && reason !== "update") return;
