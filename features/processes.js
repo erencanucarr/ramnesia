@@ -62,7 +62,20 @@
     }
   }
 
+  // The "processes" permission is not declared in the shipped manifest (it shows a warning
+  // on Stable/Beta). Chrome Dev users can add it to "optional_permissions" themselves; only
+  // then is the option offered.
+  function declared() {
+    try {
+      const m = chrome.runtime.getManifest();
+      return [...(m.permissions || []), ...(m.optional_permissions || [])].includes("processes");
+    } catch {
+      return false;
+    }
+  }
+
   async function status() {
+    if (!declared() && !api()) return { supported: false, granted: false };
     const [supported, granted] = await Promise.all([probeSupported(), isGranted()]);
     return { supported: supported || !!api(), granted: granted && (supported || !!api()) };
   }
