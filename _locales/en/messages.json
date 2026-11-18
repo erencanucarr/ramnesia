@@ -216,7 +216,7 @@
     "description": "Tab status"
   },
   "reasonPinned": {
-    "message": "Pinned",
+    "message": "Pinned – protected",
     "description": "Tab status"
   },
   "reasonAudible": {
@@ -297,7 +297,7 @@
     "description": "Minutes unit"
   },
   "skipPinned": {
-    "message": "Skip pinned tabs",
+    "message": "Never sleep pinned tabs",
     "description": "Setting"
   },
   "skipAudible": {
@@ -719,5 +719,11 @@
   },
   "siteTimeRemoved": {
     "message": "$1 uses the general time again"
+  },
+  "skipPinnedHint": {
+    "message": "Chrome's own Memory Saver won't put them to sleep either"
+  },
+  "pinnedProtectedTitle": {
+    "message": "Pinned tabs are always kept awake (Settings → Never sleep pinned tabs)"
   }
 }

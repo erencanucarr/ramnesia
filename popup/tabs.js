@@ -13,7 +13,7 @@ function statusParts(t) {
   const map = {
     locked: ["lock", i18n("reasonLocked")],
     active: ["", i18n("reasonActive")],
-    pinned: ["", i18n("reasonPinned")],
+    pinned: ["lock", i18n("reasonPinned")],
     audible: ["", i18n("reasonAudible")],
     whitelist: ["", i18n("reasonWhitelist")]
   };
@@ -36,7 +36,7 @@ function favicon(t) {
 const rowCache = new Map();
 
 function rowSignature(t) {
-  return JSON.stringify([t.title, t.host, t.favIconUrl, t.windowId, t.discarded, t.active, t.locked, statusParts(t)]);
+  return JSON.stringify([t.title, t.host, t.favIconUrl, t.windowId, t.discarded, t.active, t.locked, t.pinProtected, statusParts(t)]);
 }
 
 function buildRow(t) {
@@ -74,9 +74,11 @@ function buildRow(t) {
   });
 
   const lock = document.createElement("button");
-  lock.className = "icon-btn" + (t.locked ? " on" : "");
-  lock.innerHTML = t.locked ? ICONS.lock : ICONS.unlock;
-  lock.title = t.locked ? i18n("unlockTitle") : i18n("lockTitle");
+  const lockedNow = t.locked || t.pinProtected;
+  lock.className = "icon-btn" + (lockedNow ? " on" : "");
+  lock.innerHTML = lockedNow ? ICONS.lock : ICONS.unlock;
+  lock.title = t.pinProtected ? i18n("pinnedProtectedTitle") : t.locked ? i18n("unlockTitle") : i18n("lockTitle");
+  lock.disabled = !!t.pinProtected;
   lock.addEventListener("click", async () => {
     const r = await send({ type: "setLock", tabId: t.id, locked: !t.locked });
     if (r?.ok) toast(t.locked ? i18n("unlockedToast") : i18n("lockedToast"));

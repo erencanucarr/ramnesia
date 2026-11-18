@@ -216,7 +216,7 @@
     "description": "Tab status"
   },
   "reasonPinned": {
-    "message": "Sabitlenmiş",
+    "message": "Sabitlenmiş – korunuyor",
     "description": "Tab status"
   },
   "reasonAudible": {
@@ -297,7 +297,7 @@
     "description": "Minutes unit"
   },
   "skipPinned": {
-    "message": "Sabitlenmiş sekmeleri atla",
+    "message": "Sabitlenmiş sekmeleri hiç uyutma",
     "description": "Setting"
   },
   "skipAudible": {
@@ -719,5 +719,11 @@
   },
   "siteTimeRemoved": {
     "message": "$1 yine genel süreyi kullanıyor"
+  },
+  "skipPinnedHint": {
+    "message": "Chrome'un kendi Bellek Tasarrufu da onları uyutmaz"
+  },
+  "pinnedProtectedTitle": {
+    "message": "Sabitlenmiş sekmeler her zaman uyanık tutulur (Ayarlar → Sabitlenmiş sekmeleri hiç uyutma)"
   }
 }

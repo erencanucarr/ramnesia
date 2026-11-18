@@ -34,7 +34,7 @@ Chrome's built-in Memory Saver decides on its own when to put tabs to sleep. Ram
 - Any tab can be locked. A locked tab is never put to sleep, by Ramnesia or by Chrome's Memory Saver.
 - You can put one tab to sleep right away, or all of them with "Sleep all". The active tab and locked tabs are skipped.
 - Tab search, and a list of sites that should never be put to sleep.
-- Pinned tabs and tabs playing audio are skipped by default. Both can be turned off.
+- Pinned tabs are never put to sleep, by Ramnesia or by Chrome's own Memory Saver (on by default). Tabs playing audio are skipped too. Both can be turned off.
 - Tabs where you have typed something you haven't sent yet are not put to sleep (on by default).
 - Tabs using the camera, microphone or screen sharing are not put to sleep (on by default).
 - Optionally, background tabs are put to sleep when the computer is locked or when you've been idle for a while (off by default).
@@ -104,7 +104,7 @@ Chrome'un kendi Bellek Tasarrufu özelliği sekmeleri ne zaman uyutacağına ken
 - Sekmeler kilitlenebilir. Kilitli sekmeyi ne Ramnesia ne de Chrome'un Bellek Tasarrufu uyutur.
 - Tek bir sekmeyi hemen uyutabilir ya da "Hepsini uyut" ile hepsini uyutabilirsin. Açık sekme ve kilitli sekmeler atlanır.
 - Sekme arama ve hiç uyutulmayacak siteler listesi.
-- Sabitlenmiş sekmeler ve ses çalan sekmeler varsayılan olarak atlanır. İkisi de kapatılabilir.
+- Sabitlenmiş sekmeler ne Ramnesia ne de Chrome'un kendi Bellek Tasarrufu tarafından uyutulur (varsayılan olarak açık). Ses çalan sekmeler de atlanır. İkisi de kapatılabilir.
 - Henüz göndermediğin bir yazı olan sekmeler uyutulmaz (varsayılan olarak açık).
 - Kamera, mikrofon veya ekran paylaşımı kullanan sekmeler uyutulmaz (varsayılan olarak açık).
 - İstersen bilgisayar kilitlenince ya da bir süre kullanılmayınca arka plandaki sekmeler uyutulur (varsayılan olarak kapalı).

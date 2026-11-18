@@ -54,7 +54,7 @@
       await Promise.all([
         update(ID.sleep, { enabled: web }),
         update(ID.others, { enabled: !!tab }),
-        update(ID.lock, { enabled: web, checked: !!tab && tab.autoDiscardable === false }),
+        update(ID.lock, { enabled: web && !(s.skipPinned && tab.pinned), checked: !!tab && tab.autoDiscardable === false }),
         update(ID.never, {
           enabled: web,
           checked: web && isWhitelisted(tab.url, s.whitelist),
@@ -158,9 +158,9 @@
   chrome.tabs.onActivated.addListener(() => syncMenus());
   chrome.windows?.onFocusChanged?.addListener(() => syncMenus());
   chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
-    if (tab.active && ("url" in info || "autoDiscardable" in info)) syncMenus(tab);
+    if (tab.active && ("url" in info || "autoDiscardable" in info || "pinned" in info)) syncMenus(tab);
   });
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "sync" && (changes.whitelist || changes.siteRules || changes.minutes)) syncMenus();
+    if (area === "sync" && (changes.whitelist || changes.siteRules || changes.minutes || changes.skipPinned)) syncMenus();
   });
 })();

@@ -115,9 +115,9 @@ function isWhitelisted(url, whitelist) {
 const isWeb = (url) => !!url && /^https?:/.test(url);
 
 function skipReason(tab, s) {
+  if (s.skipPinned && tab.pinned) return "pinned";
   if (tab.autoDiscardable === false) return "locked";
   if (tab.active) return "active";
-  if (s.skipPinned && tab.pinned) return "pinned";
   if (s.skipAudible && tab.audible) return "audible";
   if (isWhitelisted(tab.url, s.whitelist)) return "whitelist";
   return null;
@@ -456,7 +456,8 @@ async function tabsInfo() {
         favIconUrl: t.favIconUrl || "",
         active: t.active,
         discarded: !!t.discarded,
-        locked: t.autoDiscardable === false,
+        locked: t.autoDiscardable === false && !(s.skipPinned && t.pinned),
+        pinProtected: !!(s.skipPinned && t.pinned),
         reason: skipReason(t, s) || (t.discarded ? null : await extraSkipReason(t, s)),
         memory: m?.bytes ?? null,
         memoryKind: m?.kind ?? null,
@@ -545,5 +546,6 @@ importScripts(
   "features/realgain.js",
   "features/calibrate.js",
   "features/processes.js",
-  "features/menu.js"
+  "features/menu.js",
+  "features/pinned.js"
 );
